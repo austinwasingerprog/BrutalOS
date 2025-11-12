@@ -36,6 +36,21 @@ export class TodoComponent implements OnInit {
   private windowStartX = 0;
   private windowStartY = 0;
   
+  constructor() {
+    // Auto-save todos changes
+    effect(() => {
+      this.storageService.saveTodos(this.todos(), this.nextId);
+    });
+    
+    // Auto-save window position changes
+    effect(() => {
+      const x = this.x();
+      const y = this.y();
+      const isMinimized = this.isMinimized();
+      this.storageService.saveTodoWindow(x, y, isMinimized);
+    });
+  }
+  
   ngOnInit(): void {
     // Load persisted state
     const stored = this.storageService.loadTodo();
@@ -59,19 +74,6 @@ export class TodoComponent implements OnInit {
       this.y.set(state.y);
       this.zIndex.set(state.zIndex);
     }
-    
-    // Auto-save todos changes
-    effect(() => {
-      this.storageService.saveTodos(this.todos(), this.nextId);
-    });
-    
-    // Auto-save window position changes
-    effect(() => {
-      const x = this.x();
-      const y = this.y();
-      const isMinimized = this.isMinimized();
-      this.storageService.saveTodoWindow(x, y, isMinimized);
-    });
   }
   
   onHeaderMouseDown(event: MouseEvent): void {

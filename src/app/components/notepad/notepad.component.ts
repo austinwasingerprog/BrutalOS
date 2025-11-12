@@ -29,6 +29,21 @@ export class NotepadComponent implements OnInit {
   private windowStartX = 0;
   private windowStartY = 0;
   
+  constructor() {
+    // Auto-save content changes
+    effect(() => {
+      this.storageService.saveNotepadContent(this.content());
+    });
+    
+    // Auto-save window position changes
+    effect(() => {
+      const x = this.x();
+      const y = this.y();
+      const isMinimized = this.isMinimized();
+      this.storageService.saveNotepadWindow(x, y, isMinimized);
+    });
+  }
+  
   ngOnInit(): void {
     // Load persisted state
     const stored = this.storageService.loadNotepad();
@@ -51,19 +66,6 @@ export class NotepadComponent implements OnInit {
       this.y.set(state.y);
       this.zIndex.set(state.zIndex);
     }
-    
-    // Auto-save content changes
-    effect(() => {
-      this.storageService.saveNotepadContent(this.content());
-    });
-    
-    // Auto-save window position changes
-    effect(() => {
-      const x = this.x();
-      const y = this.y();
-      const isMinimized = this.isMinimized();
-      this.storageService.saveNotepadWindow(x, y, isMinimized);
-    });
   }
   
   onHeaderMouseDown(event: MouseEvent): void {
