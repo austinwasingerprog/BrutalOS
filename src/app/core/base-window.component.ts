@@ -212,8 +212,9 @@ export abstract class BaseWindowComponent implements OnInit {
   };
 
   private updateWindowPosition(clientX: number, clientY: number): void {
-    const deltaX = clientX - this.dragStartX;
-    const deltaY = clientY - this.dragStartY;
+    const currentZoom = this.deskStateService.zoom();
+    const deltaX = (clientX - this.dragStartX) / currentZoom;
+    const deltaY = (clientY - this.dragStartY) / currentZoom;
 
     const newX = this.windowStartX + deltaX;
     const newY = this.windowStartY + deltaY;
