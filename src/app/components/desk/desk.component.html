@@ -5,11 +5,12 @@
   (mousemove)="onMouseMove($event)"
   (mouseup)="onMouseUp($event)"
   (mouseleave)="onMouseLeave()"
+  (wheel)="onWheel($event)"
   (touchstart)="onTouchStart($event)"
   (touchmove)="onTouchMove($event)"
   (touchend)="onTouchEnd($event)"
 >
-  <div class="desk" [style.transform]="'translate(' + deskX() + 'px, ' + deskY() + 'px)'">
+  <div class="desk" [style.transform]="'translate(' + deskX() + 'px, ' + deskY() + 'px) scale(' + zoom() + ')'">
     <div class="desk-surface">
       <app-notepad />
       <app-todo />
