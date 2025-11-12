@@ -1,45 +1,42 @@
 @if (!isMinimized()) {
-  <div class="window-container"
-       [style.--window-x.px]="x()"
-       [style.--window-y.px]="y()"
-       [style.--window-z]="zIndex()"
-       (mousedown)="onFocus()">
-    
-    <div class="calc-header" 
-         (mousedown)="onHeaderMouseDown($event)" 
-         (touchstart)="onHeaderTouchStart($event)">
-      <span class="calc-title">🔢 CALCULATOR.EXE</span>
-      <div class="calc-buttons">
-        <button class="calc-btn" (click)="onMinimize()" title="Minimize">_</button>
-      </div>
-    </div>
-    
-    <div class="calc-content">
-      <div class="calc-display">{{ display() }}</div>
-      
-      <div class="calc-grid">
-        <button class="calc-key span-2" (click)="onClearClick()">C</button>
-        <button class="calc-key operation" (click)="onOperationClick('÷')">÷</button>
-        <button class="calc-key operation" (click)="onOperationClick('×')">×</button>
-        
-        <button class="calc-key" (click)="onNumberClick('7')">7</button>
-        <button class="calc-key" (click)="onNumberClick('8')">8</button>
-        <button class="calc-key" (click)="onNumberClick('9')">9</button>
-        <button class="calc-key operation" (click)="onOperationClick('-')">−</button>
-        
-        <button class="calc-key" (click)="onNumberClick('4')">4</button>
-        <button class="calc-key" (click)="onNumberClick('5')">5</button>
-        <button class="calc-key" (click)="onNumberClick('6')">6</button>
-        <button class="calc-key operation" (click)="onOperationClick('+')">+</button>
-        
-        <button class="calc-key" (click)="onNumberClick('1')">1</button>
-        <button class="calc-key" (click)="onNumberClick('2')">2</button>
-        <button class="calc-key" (click)="onNumberClick('3')">3</button>
-        <button class="calc-key equals span-rows" (click)="onEqualsClick()">=</button>
-        
-        <button class="calc-key span-2" (click)="onNumberClick('0')">0</button>
-        <button class="calc-key" (click)="onDecimalClick()">.</button>
-      </div>
+<div class="window-container" [style.--window-x.px]="x()" [style.--window-y.px]="y()" [style.--window-z]="zIndex()"
+  (mousedown)="onMouseDown($event)" (mousemove)="onWindowMouseMove($event)" (mouseup)="onWindowMouseUp()"
+  (mouseleave)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)" (touchend)="onWindowTouchEnd()"
+  (touchcancel)="onWindowTouchEnd()">
+
+  <div class="calc-header" (mousedown)="onHeaderMouseDown($event)" (touchstart)="onHeaderTouchStart($event)">
+    <span class="calc-title">🔢 CALCULATOR.EXE</span>
+    <div class="calc-buttons">
+      <button class="calc-btn" (click)="onMinimize()" title="Minimize">_</button>
     </div>
   </div>
+
+  <div class="calc-content">
+    <div class="calc-display">{{ display() }}</div>
+
+    <div class="calc-grid">
+      <button class="calc-key span-2" (click)="onClearClick()">C</button>
+      <button class="calc-key operation" (click)="onOperationClick('÷')">÷</button>
+      <button class="calc-key operation" (click)="onOperationClick('×')">×</button>
+
+      <button class="calc-key" (click)="onNumberClick('7')">7</button>
+      <button class="calc-key" (click)="onNumberClick('8')">8</button>
+      <button class="calc-key" (click)="onNumberClick('9')">9</button>
+      <button class="calc-key operation" (click)="onOperationClick('-')">−</button>
+
+      <button class="calc-key" (click)="onNumberClick('4')">4</button>
+      <button class="calc-key" (click)="onNumberClick('5')">5</button>
+      <button class="calc-key" (click)="onNumberClick('6')">6</button>
+      <button class="calc-key operation" (click)="onOperationClick('+')">+</button>
+
+      <button class="calc-key" (click)="onNumberClick('1')">1</button>
+      <button class="calc-key" (click)="onNumberClick('2')">2</button>
+      <button class="calc-key" (click)="onNumberClick('3')">3</button>
+      <button class="calc-key equals span-rows" (click)="onEqualsClick()">=</button>
+
+      <button class="calc-key span-2" (click)="onNumberClick('0')">0</button>
+      <button class="calc-key" (click)="onDecimalClick()">.</button>
+    </div>
+  </div>
+</div>
 }

@@ -24,7 +24,7 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   protected isMinimized = computed(() => this.windowService.isMinimized(this.windowId));
   protected isActive = computed(() => this.windowService.activeWindowId() === this.windowId);
 
-  private isDragging = false;
+  protected isDragging = signal(false);
   private dragStartX = 0;
   private dragStartY = 0;
   private windowStartX = 0;
@@ -48,18 +48,27 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   private setupParticleEffects(): void {
     effect(() => {
       const shouldEmit = this.isActive() && !this.isMinimized();
+      
+      if (shouldEmit) {
+        this.startParticleEmissionSafely();
+      } else {
+        this.particleService.stopEmitting(this.windowId);
+      }
+    });
+  }
+
+  private startParticleEmissionSafely(): void {
+    requestAnimationFrame(() => {
       const windowElement = this.getWindowElement();
       const deskContainer = this.deskStateService.getDeskSurface();
 
-      if (shouldEmit && windowElement && deskContainer) {
+      if (windowElement && deskContainer) {
         this.particleService.startEmitting(
           this.windowId,
           windowElement,
           this.getParticleColor(),
           deskContainer
         );
-      } else {
-        this.particleService.stopEmitting(this.windowId);
       }
     });
   }
@@ -120,8 +129,9 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
     if (this.isClickingButton(event)) return;
 
     event.preventDefault();
+    event.stopPropagation();
+    this.windowService.bringToFront(this.windowId);
     this.beginDrag(event.clientX, event.clientY);
-    this.attachMouseDragListeners();
   }
 
   private isLeftMouseButton(event: MouseEvent): boolean {
@@ -132,66 +142,49 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
     return (event.target as HTMLElement).closest('button') !== null;
   }
 
-  private attachMouseDragListeners(): void {
-    document.addEventListener('mousemove', this.onMouseMove);
-    document.addEventListener('mouseup', this.onMouseUp);
-  }
-
   onHeaderTouchStart(event: TouchEvent): void {
     if (this.isClickingButton(event as any)) return;
     if (!this.isSingleTouchGesture(event)) return;
 
     event.preventDefault();
+    event.stopPropagation();
+    this.windowService.bringToFront(this.windowId);
     const touch = event.touches[0];
     this.beginDrag(touch.clientX, touch.clientY);
-    this.attachTouchDragListeners();
   }
 
   private isSingleTouchGesture(event: TouchEvent): boolean {
     return event.touches.length === 1;
   }
 
-  private attachTouchDragListeners(): void {
-    document.addEventListener('touchmove', this.onTouchMove, { passive: false });
-    document.addEventListener('touchend', this.onTouchEnd);
-    document.addEventListener('touchcancel', this.onTouchEnd);
-  }
-
   private beginDrag(clientX: number, clientY: number): void {
-    this.captureDragStartPosition(clientX, clientY);
-  }
-
-  private captureDragStartPosition(clientX: number, clientY: number): void {
-    this.isDragging = true;
+    this.isDragging.set(true);
     this.dragStartX = clientX;
     this.dragStartY = clientY;
     this.windowStartX = this.x();
     this.windowStartY = this.y();
   }
 
-  protected onMouseMove = (event: MouseEvent): void => {
-    if (!this.isDragging) return;
-
+  onWindowMouseMove(event: MouseEvent): void {
+    if (!this.isDragging()) return;
     this.updateWindowPosition(event.clientX, event.clientY);
-  };
+  }
 
-  protected onMouseUp = (): void => {
-    this.endDrag();
-    this.detachMouseDragListeners();
-  };
+  onWindowMouseUp(): void {
+    this.isDragging.set(false);
+  }
 
-  protected onTouchMove = (event: TouchEvent): void => {
-    if (!this.isDragging || !this.isSingleTouchGesture(event)) return;
+  onWindowTouchMove(event: TouchEvent): void {
+    if (!this.isDragging() || !this.isSingleTouchGesture(event)) return;
 
     event.preventDefault();
     const touch = event.touches[0];
     this.updateWindowPosition(touch.clientX, touch.clientY);
-  };
+  }
 
-  protected onTouchEnd = (): void => {
-    this.endDrag();
-    this.detachTouchDragListeners();
-  };
+  onWindowTouchEnd(): void {
+    this.isDragging.set(false);
+  }
 
   private updateWindowPosition(clientX: number, clientY: number): void {
     const currentZoom = this.deskStateService.zoom();
@@ -206,26 +199,12 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
     this.windowService.updatePosition(this.windowId, newX, newY);
   }
 
-  private endDrag(): void {
-    this.isDragging = false;
-  }
-
-  private detachMouseDragListeners(): void {
-    document.removeEventListener('mousemove', this.onMouseMove);
-    document.removeEventListener('mouseup', this.onMouseUp);
-  }
-
-  private detachTouchDragListeners(): void {
-    document.removeEventListener('touchmove', this.onTouchMove);
-    document.removeEventListener('touchend', this.onTouchEnd);
-    document.removeEventListener('touchcancel', this.onTouchEnd);
-  }
-
   onMinimize(): void {
     this.windowService.toggleMinimize(this.windowId);
   }
 
-  onFocus(): void {
-    this.windowService.activateWindow(this.windowId);
+  onMouseDown(event: MouseEvent): void {
+    if (!this.isLeftMouseButton(event)) return;
+    this.windowService.bringToFront(this.windowId);
   }
 }

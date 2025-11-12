@@ -1,30 +1,19 @@
 @if (!isMinimized()) {
-  <div 
-    [style.--window-x.px]="x()" 
-    [style.--window-y.px]="y()" 
-    [style.--window-z]="zIndex()"
-    class="window-container"
-    (mousedown)="onFocus()"
-  >
-    <div class="notepad-header" 
-         (mousedown)="onHeaderMouseDown($event)" 
-         (touchstart)="onHeaderTouchStart($event)">
-      <div class="notepad-title">NOTEPAD.EXE</div>
-      <div class="notepad-buttons">
-        <button class="notepad-btn" (click)="onMinimize()" title="Minimize">_</button>
-      </div>
-    </div>
-    <textarea 
-      class="notepad-content"
-      placeholder="START TYPING..."
-      [value]="content()"
-      (input)="onInput($event)"
-      (blur)="onBlur()"
-      spellcheck="false"
-    ></textarea>
-    <div class="notepad-footer">
-      <span>CHARS: {{ content().length }}</span>
-      <span>BRUTAL OS v1.0</span>
+<div [style.--window-x.px]="x()" [style.--window-y.px]="y()" [style.--window-z]="zIndex()" class="window-container"
+  (mousedown)="onMouseDown($event)" (mousemove)="onWindowMouseMove($event)" (mouseup)="onWindowMouseUp()"
+  (mouseleave)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)" (touchend)="onWindowTouchEnd()"
+  (touchcancel)="onWindowTouchEnd()">
+  <div class="notepad-header" (mousedown)="onHeaderMouseDown($event)" (touchstart)="onHeaderTouchStart($event)">
+    <div class="notepad-title">NOTEPAD.EXE</div>
+    <div class="notepad-buttons">
+      <button class="notepad-btn" (click)="onMinimize()" title="Minimize">_</button>
     </div>
   </div>
+  <textarea class="notepad-content" placeholder="START TYPING..." [value]="content()" (input)="onInput($event)"
+    (blur)="onBlur()" spellcheck="false"></textarea>
+  <div class="notepad-footer">
+    <span>CHARS: {{ content().length }}</span>
+    <span>BRUTAL OS v1.0</span>
+  </div>
+</div>
 }
