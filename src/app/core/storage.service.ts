@@ -29,6 +29,21 @@ export interface StoredTodoState {
 export class StorageService {
   private readonly NOTEPAD_KEY = 'brutalos_notepad';
   private readonly TODO_KEY = 'brutalos_todo';
+  private readonly CALCULATOR_KEY = 'brutalos_calculator';
+
+  // Generic window state persistence
+  saveWindowState(key: string, x: number, y: number, isMinimized: boolean): void {
+    const current = this.load<any>(key, {});
+    this.save(key, {
+      ...current,
+      window: { x, y, isMinimized }
+    });
+  }
+
+  loadWindowState(key: string, defaultX: number, defaultY: number): StoredWindowState {
+    const data = this.load<any>(key, {});
+    return data.window || { x: defaultX, y: defaultY, isMinimized: false };
+  }
 
   // Notepad persistence
   saveNotepadContent(content: string): void {

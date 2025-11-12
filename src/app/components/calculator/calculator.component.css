@@ -1,0 +1,141 @@
+:host {
+  display: block;
+}
+
+.window-container {
+  position: absolute;
+  width: 320px;
+  background: #fff;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0 #000;
+  display: flex;
+  flex-direction: column;
+  left: var(--window-x, 50%);
+  top: var(--window-y, 50%);
+  transform: translate(-50%, -50%);
+  z-index: var(--window-z, 1);
+}
+
+.calc-header {
+  background: #ffff00;
+  color: #000;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 4px solid #000;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: move;
+  user-select: none;
+}
+
+.calc-title {
+  font-size: 14px;
+}
+
+.calc-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.calc-btn {
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border: 3px solid #000;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.calc-btn:hover {
+  background: #00ffff;
+  transform: translate(-2px, -2px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.calc-content {
+  padding: 24px;
+  background: #fff;
+}
+
+.calc-display {
+  background: #000;
+  color: #00ffff;
+  padding: 20px;
+  font-family: 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: bold;
+  text-align: right;
+  border: 4px solid #000;
+  margin-bottom: 20px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  word-break: break-all;
+}
+
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.calc-key {
+  background: #fff;
+  border: 3px solid #000;
+  padding: 20px;
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.1s;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-key:hover {
+  background: #f0f0f0;
+  transform: translate(-2px, -2px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.calc-key:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+.calc-key.operation {
+  background: #00ffff;
+}
+
+.calc-key.operation:hover {
+  background: #00e5e5;
+}
+
+.calc-key.equals {
+  background: #ff1493;
+  color: #fff;
+}
+
+.calc-key.equals:hover {
+  background: #e0127d;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.span-rows {
+  grid-row: span 2;
+}
