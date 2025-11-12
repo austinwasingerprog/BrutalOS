@@ -1,4 +1,4 @@
-import { signal, computed, inject, OnInit, OnDestroy, effect, Directive, ElementRef } from '@angular/core';
+import { signal, computed, inject, OnInit, OnDestroy, effect, Directive, ElementRef, viewChild, afterNextRender } from '@angular/core';
 import { WindowService } from './window.service';
 import { StorageService } from './storage.service';
 import { ParticleService } from './particle.service';
@@ -9,8 +9,9 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   protected windowService = inject(WindowService);
   protected storageService = inject(StorageService);
   protected particleService = inject(ParticleService);
-  protected elementRef = inject(ElementRef);
   protected deskStateService = inject(DeskStateService);
+  
+  protected windowContainer = viewChild<ElementRef<HTMLElement>>('windowContainer');
 
   protected abstract windowId: string;
   protected abstract windowTitle: string;
@@ -48,27 +49,18 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   private setupParticleEffects(): void {
     effect(() => {
       const shouldEmit = this.isActive() && !this.isMinimized();
-      
-      if (shouldEmit) {
-        this.startParticleEmissionSafely();
-      } else {
-        this.particleService.stopEmitting(this.windowId);
-      }
-    });
-  }
-
-  private startParticleEmissionSafely(): void {
-    requestAnimationFrame(() => {
-      const windowElement = this.getWindowElement();
+      const windowElement = this.windowContainer()?.nativeElement;
       const deskContainer = this.deskStateService.getDeskSurface();
-
-      if (windowElement && deskContainer) {
+      
+      if (shouldEmit && windowElement && deskContainer) {
         this.particleService.startEmitting(
           this.windowId,
           windowElement,
           this.getParticleColor(),
           deskContainer
         );
+      } else {
+        this.particleService.stopEmitting(this.windowId);
       }
     });
   }
@@ -78,10 +70,6 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
       const currentZoom = this.deskStateService.zoom();
       this.particleService.updateZoom(currentZoom);
     });
-  }
-
-  private getWindowElement(): HTMLElement | null {
-    return this.elementRef.nativeElement.querySelector('.window, .window-container');
   }
 
   ngOnInit(): void {

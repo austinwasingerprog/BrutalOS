@@ -1,5 +1,5 @@
 @if (!isMinimized()) {
-<div [style.--window-x.px]="x()" [style.--window-y.px]="y()" [style.--window-z]="zIndex()" class="window-container"
+<div #windowContainer [style.--window-x.px]="x()" [style.--window-y.px]="y()" [style.--window-z]="zIndex()" class="window-container"
   (mousedown)="onMouseDown($event)" (mousemove)="onWindowMouseMove($event)" (mouseup)="onWindowMouseUp()"
   (mouseleave)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)" (touchend)="onWindowTouchEnd()"
   (touchcancel)="onWindowTouchEnd()">

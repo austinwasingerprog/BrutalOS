@@ -1,11 +1,12 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, effect, ChangeDetectionStrategy } from '@angular/core';
 import { BaseWindowComponent } from '../../core/base-window.component';
 
 @Component({
   selector: 'app-notepad',
   imports: [],
   templateUrl: './notepad.component.html',
-  styleUrl: './notepad.component.css'
+  styleUrl: './notepad.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NotepadComponent extends BaseWindowComponent {
   protected override windowId = 'notepad-1';

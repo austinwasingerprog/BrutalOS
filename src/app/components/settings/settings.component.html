@@ -1,4 +1,4 @@
-<div class="window" [class.minimized]="isMinimized()" [style.left.px]="x()" [style.top.px]="y()"
+<div #windowContainer class="window" [class.minimized]="isMinimized()" [style.left.px]="x()" [style.top.px]="y()"
   [style.z-index]="zIndex()" (mousedown)="onMouseDown($event)" (mousemove)="onWindowMouseMove($event)"
   (mouseup)="onWindowMouseUp()" (mouseleave)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)"
   (touchend)="onWindowTouchEnd()" (touchcancel)="onWindowTouchEnd()">

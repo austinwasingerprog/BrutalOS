@@ -23,7 +23,7 @@ import { ParticleService } from '../../core/particle.service';
       position: absolute;
       inset: 0;
       pointer-events: none;
-      z-index: 10;
+      z-index: 100;
       overflow: visible;
     }
     
@@ -31,6 +31,7 @@ import { ParticleService } from '../../core/particle.service';
       position: absolute;
       width: 8px;
       height: 8px;
+      border-radius: 50%;
       transform: translate(-50%, -50%);
       will-change: transform, opacity;
     }

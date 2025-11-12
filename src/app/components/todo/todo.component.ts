@@ -1,4 +1,4 @@
-import { Component, signal, computed, effect } from '@angular/core';
+import { Component, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { BaseWindowComponent } from '../../core/base-window.component';
 import { TodoItem } from '../../core/storage.service';
 
@@ -6,7 +6,8 @@ import { TodoItem } from '../../core/storage.service';
   selector: 'app-todo',
   imports: [],
   templateUrl: './todo.component.html',
-  styleUrl: './todo.component.css'
+  styleUrl: './todo.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TodoComponent extends BaseWindowComponent {
   protected override windowId = 'todo-1';

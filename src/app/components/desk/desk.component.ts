@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, ElementRef, effect } from '@angular/core';
+import { Component, signal, computed, inject, ElementRef, effect, viewChild } from '@angular/core';
 import { NotepadComponent } from '../notepad/notepad.component';
 import { TodoComponent } from '../todo/todo.component';
 import { CalculatorComponent } from '../calculator/calculator.component';
@@ -16,7 +16,9 @@ import { DeskStateService } from '../../core/desk-state.service';
 export class DeskComponent {
   private panService = inject(PanService);
   private deskStateService = inject(DeskStateService);
-  private elementRef = inject(ElementRef);
+  
+  // View query for the desk surface element
+  private deskSurface = viewChild<ElementRef<HTMLElement>>('deskSurface');
   
   protected deskX = signal(0);
   protected deskY = signal(0);
@@ -35,16 +37,12 @@ export class DeskComponent {
   }
   
   private registerDeskSurfaceWithGlobalState(): void {
-    setTimeout(() => {
-      const deskSurfaceElement = this.getDeskSurfaceElement();
+    effect(() => {
+      const deskSurfaceElement = this.deskSurface()?.nativeElement;
       if (deskSurfaceElement) {
         this.deskStateService.setDeskSurface(deskSurfaceElement);
       }
     });
-  }
-  
-  private getDeskSurfaceElement(): HTMLElement | null {
-    return this.elementRef.nativeElement.querySelector('.desk-surface');
   }
   
   private maxPan = 600;

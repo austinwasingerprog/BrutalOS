@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { BaseWindowComponent } from '../../core/base-window.component';
 import { ThemeService, Theme } from '../../core/theme.service';
 
@@ -6,7 +6,8 @@ import { ThemeService, Theme } from '../../core/theme.service';
   selector: 'app-settings',
   imports: [],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css'
+  styleUrl: './settings.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsComponent extends BaseWindowComponent {
   private themeService = inject(ThemeService);
