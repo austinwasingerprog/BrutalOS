@@ -16,30 +16,45 @@ export interface Particle {
 })
 export class ParticleService {
   particles = signal<Particle[]>([]);
-  private nextId = 0;
-  private animationFrame: number | null = null;
-  private lastTime = 0;
+  
+  private nextParticleId = 0;
+  private animationFrameId: number | null = null;
+  private lastAnimationTime = 0;
   
   private activeWindowBounds: DOMRect | null = null;
-  private particleColor = '#ff1493';
+  private activeWindowElement: HTMLElement | null = null;
   private containerBounds: DOMRect | null = null;
-  private currentZoom = 1;
   private containerElement: HTMLElement | null = null;
-  private activeElement: HTMLElement | null = null;
   
-  startEmitting(element: HTMLElement, color: string, container: HTMLElement): void {
-    this.particleColor = color;
-    this.activeElement = element;
-    this.containerElement = container;
+  private currentColor = '#ff1493';
+  private currentZoom = 1;
+  
+  startEmitting(windowElement: HTMLElement, color: string, containerElement: HTMLElement): void {
+    this.captureEmissionContext(windowElement, color, containerElement);
+    this.ensureAnimationIsRunning();
+  }
+  
+  private captureEmissionContext(windowElement: HTMLElement, color: string, containerElement: HTMLElement): void {
+    this.currentColor = color;
+    this.activeWindowElement = windowElement;
+    this.containerElement = containerElement;
+    this.refreshBoundingBoxes();
+  }
+  
+  private refreshBoundingBoxes(): void {
+    if (this.containerElement) {
+      this.containerBounds = this.containerElement.getBoundingClientRect();
+    }
     
-    // Always update bounds immediately
-    this.containerBounds = container.getBoundingClientRect();
-    this.activeWindowBounds = element.getBoundingClientRect();
-    
-    // Start animation loop if not already running
-    if (!this.animationFrame) {
-      this.lastTime = performance.now();
-      this.animate();
+    if (this.activeWindowElement) {
+      this.activeWindowBounds = this.activeWindowElement.getBoundingClientRect();
+    }
+  }
+  
+  private ensureAnimationIsRunning(): void {
+    if (!this.animationFrameId) {
+      this.lastAnimationTime = performance.now();
+      this.runAnimationLoop();
     }
   }
   
@@ -48,77 +63,107 @@ export class ParticleService {
   }
   
   stopEmitting(): void {
-    this.activeElement = null;
+    this.activeWindowElement = null;
     this.activeWindowBounds = null;
-    // Keep containerElement - it's desk-level and doesn't change
   }
   
-  private animate = (): void => {
+  private runAnimationLoop = (): void => {
     const currentTime = performance.now();
-    const deltaTime = (currentTime - this.lastTime) / 1000; // seconds
-    this.lastTime = currentTime;
+    const deltaTimeInSeconds = (currentTime - this.lastAnimationTime) / 1000;
+    this.lastAnimationTime = currentTime;
     
-    // Update bounds from active element (tracks movement and zoom changes)
-    if (this.activeElement && this.containerElement) {
-      this.containerBounds = this.containerElement.getBoundingClientRect();
-      this.activeWindowBounds = this.activeElement.getBoundingClientRect();
-    }
-    
-    // Spawn new particles if we have an active window
-    if (this.activeWindowBounds && this.containerBounds && Math.random() < 0.3) {
-      this.spawnParticle(this.activeWindowBounds, this.containerBounds, this.currentZoom);
-    }
-    
-    // Update existing particles
-    this.updateParticles(deltaTime);
-    
-    // Continue animation
-    this.animationFrame = requestAnimationFrame(this.animate);
+    this.refreshBoundingBoxes();
+    this.maybeSpawnParticle();
+    this.updateExistingParticles(deltaTimeInSeconds);
+    this.scheduleNextFrame();
   };
   
-  private spawnParticle(bounds: DOMRect, containerBounds: DOMRect, zoom: number): void {
-    // Convert screen coordinates to desk-surface coordinates
-    // Account for container offset and zoom
+  private maybeSpawnParticle(): void {
+    if (!this.canSpawnParticles()) return;
+    if (Math.random() >= 0.3) return;
+    
+    this.createParticle(this.activeWindowBounds!, this.containerBounds!, this.currentZoom);
+  }
+  
+  private canSpawnParticles(): boolean {
+    return this.activeWindowBounds !== null && this.containerBounds !== null;
+  }
+  
+  private scheduleNextFrame(): void {
+    this.animationFrameId = requestAnimationFrame(this.runAnimationLoop);
+  }
+  
+  private createParticle(windowBounds: DOMRect, containerBounds: DOMRect, zoom: number): void {
+    const position = this.calculateParticlePosition(windowBounds, containerBounds, zoom);
+    const velocity = this.calculateParticleVelocity(zoom);
+    const lifespan = this.calculateParticleLifespan();
+    
+    const particle: Particle = {
+      id: this.nextParticleId++,
+      ...position,
+      ...velocity,
+      life: 0,
+      maxLife: lifespan,
+      color: this.currentColor
+    };
+    
+    this.particles.update(existing => [...existing, particle]);
+  }
+  
+  private calculateParticlePosition(windowBounds: DOMRect, containerBounds: DOMRect, zoom: number) {
     const offsetX = containerBounds.left;
     const offsetY = containerBounds.top;
     
-    // Spawn only from the top edge
-    const x = (bounds.left - offsetX + Math.random() * bounds.width) / zoom;
-    const y = (bounds.top - offsetY - 10) / zoom;
-    const vx = (Math.random() - 0.5) * 30 / zoom;
-    const vy = (-20 - Math.random() * 20) / zoom;
+    const randomXOffset = Math.random() * windowBounds.width;
+    const topEdgeOffset = 10;
     
-    const particle: Particle = {
-      id: this.nextId++,
-      x,
-      y,
-      vx,
-      vy,
-      life: 0,
-      maxLife: 1.5 + Math.random() * 1.5, // 1.5-3 seconds
-      color: this.particleColor
+    return {
+      x: (windowBounds.left - offsetX + randomXOffset) / zoom,
+      y: (windowBounds.top - offsetY - topEdgeOffset) / zoom
     };
-    
-    this.particles.update(particles => [...particles, particle]);
   }
   
-  private updateParticles(deltaTime: number): void {
-    this.particles.update(particles => {
-      return particles
-        .map(p => ({
-          ...p,
-          x: p.x + p.vx * deltaTime,
-          y: p.y + p.vy * deltaTime,
-          life: p.life + deltaTime
-        }))
-        .filter(p => p.life < p.maxLife); // Remove dead particles
-    });
+  private calculateParticleVelocity(zoom: number) {
+    const horizontalSpeed = (Math.random() - 0.5) * 30 / zoom;
+    const verticalSpeed = (-20 - Math.random() * 20) / zoom;
+    
+    return {
+      vx: horizontalSpeed,
+      vy: verticalSpeed
+    };
+  }
+  
+  private calculateParticleLifespan(): number {
+    const minLifespan = 1.5;
+    const maxAdditionalLifespan = 1.5;
+    return minLifespan + Math.random() * maxAdditionalLifespan;
+  }
+  
+  private updateExistingParticles(deltaTime: number): void {
+    this.particles.update(particles => 
+      particles
+        .map(particle => this.advanceParticle(particle, deltaTime))
+        .filter(particle => this.isParticleAlive(particle))
+    );
+  }
+  
+  private advanceParticle(particle: Particle, deltaTime: number): Particle {
+    return {
+      ...particle,
+      x: particle.x + particle.vx * deltaTime,
+      y: particle.y + particle.vy * deltaTime,
+      life: particle.life + deltaTime
+    };
+  }
+  
+  private isParticleAlive(particle: Particle): boolean {
+    return particle.life < particle.maxLife;
   }
   
   destroy(): void {
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame);
-      this.animationFrame = null;
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
     this.particles.set([]);
   }

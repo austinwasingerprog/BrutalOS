@@ -17,8 +17,10 @@ export class NotepadComponent extends BaseWindowComponent {
   
   constructor() {
     super();
-    
-    // Auto-save content changes
+    this.setupAutoSave();
+  }
+  
+  private setupAutoSave(): void {
     effect(() => {
       this.storageService.saveNotepadContent(this.content());
     });
@@ -36,22 +38,18 @@ export class NotepadComponent extends BaseWindowComponent {
   }
   
   override ngOnInit(): void {
-    // Load persisted content
-    const stored = this.storageService.loadNotepad();
-    this.content.set(stored.content);
-    
-    // Call base class initialization
+    this.loadSavedContent();
     super.ngOnInit();
+  }
+  
+  private loadSavedContent(): void {
+    const savedNotepad = this.storageService.loadNotepad();
+    this.content.set(savedNotepad.content);
   }
   
   onInput(event: Event): void {
     const textarea = event.target as HTMLTextAreaElement;
     this.content.set(textarea.value);
-  }
-  
-  override onFocus(): void {
-    super.onFocus();
-    this.focused.set(true);
   }
   
   onBlur(): void {

@@ -24,18 +24,27 @@ export class DeskComponent {
   protected cursorStyle = computed(() => this.panService.getCursorStyle());
   
   constructor() {
-    // Sync zoom with desk state service
+    this.syncZoomWithGlobalState();
+    this.registerDeskSurfaceWithGlobalState();
+  }
+  
+  private syncZoomWithGlobalState(): void {
     effect(() => {
       this.deskStateService.setZoom(this.zoom());
     });
-    
-    // Set desk surface element reference after view init
+  }
+  
+  private registerDeskSurfaceWithGlobalState(): void {
     setTimeout(() => {
-      const deskSurface = this.elementRef.nativeElement.querySelector('.desk-surface');
-      if (deskSurface) {
-        this.deskStateService.setDeskSurface(deskSurface);
+      const deskSurfaceElement = this.getDeskSurfaceElement();
+      if (deskSurfaceElement) {
+        this.deskStateService.setDeskSurface(deskSurfaceElement);
       }
     });
+  }
+  
+  private getDeskSurfaceElement(): HTMLElement | null {
+    return this.elementRef.nativeElement.querySelector('.desk-surface');
   }
   
   private maxPan = 600;
@@ -49,27 +58,47 @@ export class DeskComponent {
   private initialPinchDistance = 0;
   
   onMouseDown(event: MouseEvent): void {
-    // Middle mouse button (button 1) or pan mode with left click
-    if (event.button === 1) {
-      event.preventDefault();
-      this.isMiddleMousePan = true;
-      this.panService.startPan(event.clientX, event.clientY, true);
-    } else if (event.button === 0 && this.panService.panModeActive()) {
-      event.preventDefault();
-      this.isMiddleMousePan = false;
-      this.panService.startPan(event.clientX, event.clientY, false);
+    if (this.isMiddleMouseButton(event)) {
+      this.startMiddleMousePan(event);
+    } else if (this.isLeftMouseButtonWithPanMode(event)) {
+      this.startLeftMousePan(event);
     }
   }
   
+  private isMiddleMouseButton(event: MouseEvent): boolean {
+    return event.button === 1;
+  }
+  
+  private isLeftMouseButtonWithPanMode(event: MouseEvent): boolean {
+    return event.button === 0 && this.panService.panModeActive();
+  }
+  
+  private startMiddleMousePan(event: MouseEvent): void {
+    event.preventDefault();
+    this.isMiddleMousePan = true;
+    this.panService.startPan(event.clientX, event.clientY, true);
+  }
+  
+  private startLeftMousePan(event: MouseEvent): void {
+    event.preventDefault();
+    this.isMiddleMousePan = false;
+    this.panService.startPan(event.clientX, event.clientY, false);
+  }
+  
   onMouseMove(event: MouseEvent): void {
-    this.panService.updatePan(event.clientX, event.clientY, (deltaX, deltaY) => {
-      const newX = this.deskX() + deltaX;
-      const newY = this.deskY() + deltaY;
-      
-      // Apply limits
-      this.deskX.set(Math.max(-this.maxPan, Math.min(this.maxPan, newX)));
-      this.deskY.set(Math.max(-this.maxPan, Math.min(this.maxPan, newY)));
-    });
+    this.panService.updatePan(event.clientX, event.clientY, this.updateDeskPosition);
+  }
+  
+  private updateDeskPosition = (deltaX: number, deltaY: number): void => {
+    const newX = this.deskX() + deltaX;
+    const newY = this.deskY() + deltaY;
+    
+    this.deskX.set(this.clampPanValue(newX));
+    this.deskY.set(this.clampPanValue(newY));
+  };
+  
+  private clampPanValue(value: number): number {
+    return Math.max(-this.maxPan, Math.min(this.maxPan, value));
   }
   
   onMouseUp(event: MouseEvent): void {
@@ -85,78 +114,87 @@ export class DeskComponent {
   }
   
   onTouchStart(event: TouchEvent): void {
-    // Handle two-finger touch for both panning and zooming
-    if (event.touches.length === 2) {
-      event.preventDefault();
-      
-      const touch1 = event.touches[0];
-      const touch2 = event.touches[1];
-      
-      // Calculate initial distance for pinch detection
-      const dx = touch2.clientX - touch1.clientX;
-      const dy = touch2.clientY - touch1.clientY;
-      this.initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
-      
-      this.touchStartZoom = this.zoom();
-      
-      const centerX = (touch1.clientX + touch2.clientX) / 2;
-      const centerY = (touch1.clientY + touch2.clientY) / 2;
-      this.panService.startPan(centerX, centerY, false);
-    }
+    if (!this.isTwoFingerTouch(event)) return;
+    
+    event.preventDefault();
+    this.initializePinchGesture(event);
+  }
+  
+  private isTwoFingerTouch(event: TouchEvent): boolean {
+    return event.touches.length === 2;
+  }
+  
+  private initializePinchGesture(event: TouchEvent): void {
+    const [touch1, touch2] = [event.touches[0], event.touches[1]];
+    
+    this.initialPinchDistance = this.calculateDistance(touch1, touch2);
+    this.touchStartZoom = this.zoom();
+    
+    const centerPoint = this.calculateTouchCenter(touch1, touch2);
+    this.panService.startPan(centerPoint.x, centerPoint.y, false);
+  }
+  
+  private calculateDistance(touch1: Touch, touch2: Touch): number {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  private calculateTouchCenter(touch1: Touch, touch2: Touch) {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
   }
   
   onTouchMove(event: TouchEvent): void {
-    // Handle two-finger touch for both panning and zooming
-    if (event.touches.length === 2 && this.initialPinchDistance > 0) {
-      event.preventDefault();
-      
-      const touch1 = event.touches[0];
-      const touch2 = event.touches[1];
-      
-      const centerX = (touch1.clientX + touch2.clientX) / 2;
-      const centerY = (touch1.clientY + touch2.clientY) / 2;
-      
-      // Calculate current distance for pinch/zoom detection
-      const dx = touch2.clientX - touch1.clientX;
-      const dy = touch2.clientY - touch1.clientY;
-      const currentDistance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Calculate zoom factor based on pinch distance change
-      const scale = currentDistance / this.initialPinchDistance;
-      const newZoom = this.touchStartZoom * scale;
-      
-      // Apply zoom (clamped between min and max)
-      this.zoom.set(Math.max(this.minZoom, Math.min(this.maxZoom, newZoom)));
-      
-      // Also handle panning at the same time
-      this.panService.updatePan(centerX, centerY, (deltaX, deltaY) => {
-        const newX = this.deskX() + deltaX;
-        const newY = this.deskY() + deltaY;
-        
-        // Apply limits
-        this.deskX.set(Math.max(-this.maxPan, Math.min(this.maxPan, newX)));
-        this.deskY.set(Math.max(-this.maxPan, Math.min(this.maxPan, newY)));
-      });
-    }
+    if (!this.isActivePinchGesture(event)) return;
+    
+    event.preventDefault();
+    this.handlePinchGesture(event);
+  }
+  
+  private isActivePinchGesture(event: TouchEvent): boolean {
+    return event.touches.length === 2 && this.initialPinchDistance > 0;
+  }
+  
+  private handlePinchGesture(event: TouchEvent): void {
+    const [touch1, touch2] = [event.touches[0], event.touches[1]];
+    const centerPoint = this.calculateTouchCenter(touch1, touch2);
+    const currentDistance = this.calculateDistance(touch1, touch2);
+    
+    this.updateZoomFromPinch(currentDistance);
+    this.panService.updatePan(centerPoint.x, centerPoint.y, this.updateDeskPosition);
+  }
+  
+  private updateZoomFromPinch(currentDistance: number): void {
+    const scale = currentDistance / this.initialPinchDistance;
+    const newZoom = this.touchStartZoom * scale;
+    const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
+    this.zoom.set(clampedZoom);
   }
   
   onTouchEnd(event: TouchEvent): void {
-    // End panning and reset zoom tracking when fingers are lifted
     if (event.touches.length < 2) {
-      this.panService.endPan(false);
-      this.initialPinchDistance = 0;
+      this.endPinchGesture();
     }
+  }
+  
+  private endPinchGesture(): void {
+    this.panService.endPan(false);
+    this.initialPinchDistance = 0;
   }
   
   onWheel(event: WheelEvent): void {
     event.preventDefault();
-    
-    // deltaY < 0 = scroll up = zoom in
-    // deltaY > 0 = scroll down = zoom out
-    const delta = event.deltaY > 0 ? -this.zoomStep : this.zoomStep;
+    this.adjustZoomFromWheel(event);
+  }
+  
+  private adjustZoomFromWheel(event: WheelEvent): void {
+    const zoomDirection = event.deltaY > 0 ? -1 : 1;
+    const delta = zoomDirection * this.zoomStep;
     const newZoom = this.zoom() + delta;
-    
-    // Clamp zoom between min and max
-    this.zoom.set(Math.max(this.minZoom, Math.min(this.maxZoom, newZoom)));
+    const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
+    this.zoom.set(clampedZoom);
   }
 }

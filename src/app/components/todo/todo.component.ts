@@ -25,8 +25,10 @@ export class TodoComponent extends BaseWindowComponent {
   
   constructor() {
     super();
-    
-    // Auto-save todos changes
+    this.setupAutoSave();
+  }
+  
+  private setupAutoSave(): void {
     effect(() => {
       this.storageService.saveTodos(this.todos(), this.nextId);
     });
@@ -44,13 +46,14 @@ export class TodoComponent extends BaseWindowComponent {
   }
   
   override ngOnInit(): void {
-    // Load persisted state
-    const stored = this.storageService.loadTodo();
-    this.todos.set(stored.todos);
-    this.nextId = stored.nextId;
-    
-    // Call base class initialization
+    this.loadSavedTodos();
     super.ngOnInit();
+  }
+  
+  private loadSavedTodos(): void {
+    const savedData = this.storageService.loadTodo();
+    this.todos.set(savedData.todos);
+    this.nextId = savedData.nextId;
   }
   
   onInputChange(event: Event): void {

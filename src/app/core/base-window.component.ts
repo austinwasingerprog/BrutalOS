@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, effect, Directive, ElementRef } from '@angular/core';
+import { signal, computed, inject, OnInit, effect, Directive, ElementRef } from '@angular/core';
 import { WindowService } from './window.service';
 import { StorageService } from './storage.service';
 import { ParticleService } from './particle.service';
@@ -11,202 +11,240 @@ export abstract class BaseWindowComponent implements OnInit {
   protected particleService = inject(ParticleService);
   protected elementRef = inject(ElementRef);
   protected deskStateService = inject(DeskStateService);
-  
-  // Subclasses must provide these
+
   protected abstract windowId: string;
   protected abstract windowTitle: string;
   protected abstract storageKey: string;
   protected abstract getDefaultPosition(): { x: number; y: number };
-  
-  // Window state
+  protected abstract getParticleColor(): string;
+
   protected x = signal(0);
   protected y = signal(0);
   protected zIndex = signal(1);
   protected isMinimized = computed(() => this.windowService.isMinimized(this.windowId));
   protected isActive = computed(() => this.windowService.activeWindowId() === this.windowId);
-  private activationTrigger = signal(0); // Used to force particle restart on click
-  
-  // Dragging state
+
+  private activationTrigger = signal(0);
   private isDragging = false;
   private dragStartX = 0;
   private dragStartY = 0;
   private windowStartX = 0;
   private windowStartY = 0;
-  
+
   constructor() {
-    // Auto-save window position changes
+    this.setupWindowStatePersistence();
+    this.setupParticleEffects();
+    this.setupZoomTracking();
+  }
+
+  private setupWindowStatePersistence(): void {
     effect(() => {
       const x = this.x();
       const y = this.y();
       const isMinimized = this.isMinimized();
       this.storageService.saveWindowState(this.storageKey, x, y, isMinimized);
     });
-    
-    // Emit particles when window is active or position changes
+  }
+
+  private setupParticleEffects(): void {
     effect(() => {
       const isActive = this.isActive();
-      const x = this.x(); // Track position changes
-      const y = this.y();
-      const isMin = this.isMinimized();
-      const trigger = this.activationTrigger(); // Track activation clicks
-      
-      if (isActive && !isMin) {
-        this.startParticles();
+      const isMinimized = this.isMinimized();
+      const position = { x: this.x(), y: this.y() };
+      this.activationTrigger();
+
+      if (isActive && !isMinimized) {
+        this.startParticleEmission();
       } else {
         this.particleService.stopEmitting();
       }
     });
-    
-    // Separate effect for zoom updates - doesn't trigger start/stop
+  }
+
+  private setupZoomTracking(): void {
     effect(() => {
-      const zoom = this.deskStateService.zoom();
-      this.particleService.updateZoom(zoom);
+      const currentZoom = this.deskStateService.zoom();
+      this.particleService.updateZoom(currentZoom);
     });
   }
-  
+
+  private startParticleEmission(): void {
+    const windowElement = this.getWindowElement();
+    const deskContainer = this.deskStateService.getDeskSurface();
+
+    if (windowElement && deskContainer) {
+      this.particleService.startEmitting(windowElement, this.getParticleColor(), deskContainer);
+    }
+  }
+
+  private getWindowElement(): HTMLElement | null {
+    return this.elementRef.nativeElement.querySelector('.window, .window-container');
+  }
+
   ngOnInit(): void {
-    // Load persisted position or use default
-    const defaultPos = this.getDefaultPosition();
-    const { x: initialX, y: initialY, isMinimized } = this.storageService.loadWindowState(
+    this.initializeWindowFromStorage();
+  }
+
+  private initializeWindowFromStorage(): void {
+    const defaultPosition = this.getDefaultPosition();
+    const savedState = this.storageService.loadWindowState(
       this.storageKey,
-      defaultPos.x,
-      defaultPos.y
+      defaultPosition.x,
+      defaultPosition.y
     );
-    
-    // Register window with service
-    this.windowService.registerWindow(this.windowId, this.windowTitle, initialX, initialY);
+
+    this.registerWindowInService(savedState.x, savedState.y);
+    this.restoreMinimizedState(savedState.isMinimized);
+    this.synchronizeLocalState();
+  }
+
+  private registerWindowInService(x: number, y: number): void {
+    this.windowService.registerWindow(this.windowId, this.windowTitle, x, y);
+  }
+
+  private restoreMinimizedState(isMinimized: boolean): void {
     if (isMinimized) {
       this.windowService.toggleMinimize(this.windowId);
     }
-    
-    // Sync with service state
-    const state = this.windowService.getWindow(this.windowId);
-    if (state) {
-      this.x.set(state.x);
-      this.y.set(state.y);
-      this.zIndex.set(state.zIndex);
+  }
+
+  private synchronizeLocalState(): void {
+    const windowState = this.windowService.getWindow(this.windowId);
+
+    if (windowState) {
+      this.x.set(windowState.x);
+      this.y.set(windowState.y);
+      this.zIndex.set(windowState.zIndex);
     }
   }
-  
-  // Common window operations
+
   onHeaderMouseDown(event: MouseEvent): void {
-    // Only drag with left mouse button (button 0)
-    if (event.button !== 0) {
-      return;
-    }
-    
-    if ((event.target as HTMLElement).closest('button')) {
-      return; // Don't drag if clicking a button
-    }
-    
+    if (!this.isLeftMouseButton(event)) return;
+    if (this.isClickingButton(event)) return;
+
     event.preventDefault();
-    this.startDrag(event.clientX, event.clientY);
-    
+    this.beginDrag(event.clientX, event.clientY);
+    this.attachMouseDragListeners();
+  }
+
+  private isLeftMouseButton(event: MouseEvent): boolean {
+    return event.button === 0;
+  }
+
+  private isClickingButton(event: MouseEvent): boolean {
+    return (event.target as HTMLElement).closest('button') !== null;
+  }
+
+  private attachMouseDragListeners(): void {
     document.addEventListener('mousemove', this.onMouseMove);
     document.addEventListener('mouseup', this.onMouseUp);
   }
-  
+
   onHeaderTouchStart(event: TouchEvent): void {
-    if ((event.target as HTMLElement).closest('button')) {
-      return; // Don't drag if touching a button
-    }
-    
-    // Only handle single touch
-    if (event.touches.length !== 1) {
-      return;
-    }
-    
+    if (this.isClickingButton(event as any)) return;
+    if (!this.isSingleTouchGesture(event)) return;
+
     event.preventDefault();
     const touch = event.touches[0];
-    this.startDrag(touch.clientX, touch.clientY);
-    
+    this.beginDrag(touch.clientX, touch.clientY);
+    this.attachTouchDragListeners();
+  }
+
+  private isSingleTouchGesture(event: TouchEvent): boolean {
+    return event.touches.length === 1;
+  }
+
+  private attachTouchDragListeners(): void {
     document.addEventListener('touchmove', this.onTouchMove, { passive: false });
     document.addEventListener('touchend', this.onTouchEnd);
     document.addEventListener('touchcancel', this.onTouchEnd);
   }
-  
-  private startDrag(clientX: number, clientY: number): void {
+
+  private beginDrag(clientX: number, clientY: number): void {
+    this.captureDragStartPosition(clientX, clientY);
+    this.bringWindowToFront();
+    this.triggerParticleActivation();
+  }
+
+  private captureDragStartPosition(clientX: number, clientY: number): void {
     this.isDragging = true;
     this.dragStartX = clientX;
     this.dragStartY = clientY;
     this.windowStartX = this.x();
     this.windowStartY = this.y();
-    
+  }
+
+  private bringWindowToFront(): void {
     this.windowService.bringToFront(this.windowId);
-    const state = this.windowService.getWindow(this.windowId);
-    if (state) {
-      this.zIndex.set(state.zIndex);
-    }
-    
-    // Trigger particles when starting to drag
-    this.activationTrigger.update(v => v + 1);
-  }
-  
-  protected abstract getParticleColor(): string;
-  
-  private startParticles(): void {
-    const element = this.elementRef.nativeElement.querySelector('.window, .window-container');
-    const container = this.deskStateService.getDeskSurface();
-    if (element && container) {
-      this.particleService.startEmitting(element, this.getParticleColor(), container);
+
+    const windowState = this.windowService.getWindow(this.windowId);
+    if (windowState) {
+      this.zIndex.set(windowState.zIndex);
     }
   }
-  
+
+  private triggerParticleActivation(): void {
+    console.log('Triggering particle activation, active window id:', this.windowService.activeWindowId());
+    this.activationTrigger.update(count => count + 1);
+  }
+
   protected onMouseMove = (event: MouseEvent): void => {
     if (!this.isDragging) return;
-    
-    const deltaX = event.clientX - this.dragStartX;
-    const deltaY = event.clientY - this.dragStartY;
-    
-    const newX = this.windowStartX + deltaX;
-    const newY = this.windowStartY + deltaY;
-    
-    this.x.set(newX);
-    this.y.set(newY);
-    this.windowService.updatePosition(this.windowId, newX, newY);
+
+    this.updateWindowPosition(event.clientX, event.clientY);
   };
-  
+
   protected onMouseUp = (): void => {
-    this.isDragging = false;
-    document.removeEventListener('mousemove', this.onMouseMove);
-    document.removeEventListener('mouseup', this.onMouseUp);
+    this.endDrag();
+    this.detachMouseDragListeners();
   };
-  
+
   protected onTouchMove = (event: TouchEvent): void => {
-    if (!this.isDragging || event.touches.length !== 1) return;
-    
+    if (!this.isDragging || !this.isSingleTouchGesture(event)) return;
+
     event.preventDefault();
     const touch = event.touches[0];
-    
-    const deltaX = touch.clientX - this.dragStartX;
-    const deltaY = touch.clientY - this.dragStartY;
-    
+    this.updateWindowPosition(touch.clientX, touch.clientY);
+  };
+
+  protected onTouchEnd = (): void => {
+    this.endDrag();
+    this.detachTouchDragListeners();
+  };
+
+  private updateWindowPosition(clientX: number, clientY: number): void {
+    const deltaX = clientX - this.dragStartX;
+    const deltaY = clientY - this.dragStartY;
+
     const newX = this.windowStartX + deltaX;
     const newY = this.windowStartY + deltaY;
-    
+
     this.x.set(newX);
     this.y.set(newY);
     this.windowService.updatePosition(this.windowId, newX, newY);
-  };
-  
-  protected onTouchEnd = (): void => {
+  }
+
+  private endDrag(): void {
     this.isDragging = false;
+  }
+
+  private detachMouseDragListeners(): void {
+    document.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mouseup', this.onMouseUp);
+  }
+
+  private detachTouchDragListeners(): void {
     document.removeEventListener('touchmove', this.onTouchMove);
     document.removeEventListener('touchend', this.onTouchEnd);
     document.removeEventListener('touchcancel', this.onTouchEnd);
-  };
-  
+  }
+
   onMinimize(): void {
     this.windowService.toggleMinimize(this.windowId);
   }
-  
+
   onFocus(): void {
-    this.windowService.bringToFront(this.windowId);
-    const state = this.windowService.getWindow(this.windowId);
-    if (state) {
-      this.zIndex.set(state.zIndex);
-    }
-    // Increment to trigger particle effect
-    this.activationTrigger.update(v => v + 1);
+    this.bringWindowToFront();
+    this.triggerParticleActivation();
   }
 }
