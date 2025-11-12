@@ -1,4 +1,4 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 export interface Particle {
   id: number;
@@ -22,38 +22,51 @@ export class ParticleService {
   
   private activeWindowBounds: DOMRect | null = null;
   private particleColor = '#ff1493';
+  private containerBounds: DOMRect | null = null;
+  private currentZoom = 1;
+  private containerElement: HTMLElement | null = null;
+  private activeElement: HTMLElement | null = null;
   
-  startEmitting(element: HTMLElement, color: string): void {
+  startEmitting(element: HTMLElement, color: string, container: HTMLElement): void {
     this.particleColor = color;
     this.activeElement = element;
+    this.containerElement = container;
+    
+    // Always update bounds immediately
+    this.containerBounds = container.getBoundingClientRect();
     this.activeWindowBounds = element.getBoundingClientRect();
     
+    // Start animation loop if not already running
     if (!this.animationFrame) {
       this.lastTime = performance.now();
       this.animate();
     }
   }
   
+  updateZoom(zoom: number): void {
+    this.currentZoom = zoom;
+  }
+  
   stopEmitting(): void {
     this.activeElement = null;
     this.activeWindowBounds = null;
+    // Keep containerElement - it's desk-level and doesn't change
   }
-  
-  private activeElement: HTMLElement | null = null;
   
   private animate = (): void => {
     const currentTime = performance.now();
     const deltaTime = (currentTime - this.lastTime) / 1000; // seconds
     this.lastTime = currentTime;
     
-    // Update bounds from active element (tracks movement)
-    if (this.activeElement) {
+    // Update bounds from active element (tracks movement and zoom changes)
+    if (this.activeElement && this.containerElement) {
+      this.containerBounds = this.containerElement.getBoundingClientRect();
       this.activeWindowBounds = this.activeElement.getBoundingClientRect();
     }
     
     // Spawn new particles if we have an active window
-    if (this.activeWindowBounds && Math.random() < 0.3) {
-      this.spawnParticle(this.activeWindowBounds);
+    if (this.activeWindowBounds && this.containerBounds && Math.random() < 0.3) {
+      this.spawnParticle(this.activeWindowBounds, this.containerBounds, this.currentZoom);
     }
     
     // Update existing particles
@@ -63,39 +76,17 @@ export class ParticleService {
     this.animationFrame = requestAnimationFrame(this.animate);
   };
   
-  private spawnParticle(bounds: DOMRect): void {
-    const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-    let x = 0;
-    let y = 0;
-    let vx = 0;
-    let vy = 0;
+  private spawnParticle(bounds: DOMRect, containerBounds: DOMRect, zoom: number): void {
+    // Convert screen coordinates to desk-surface coordinates
+    // Account for container offset and zoom
+    const offsetX = containerBounds.left;
+    const offsetY = containerBounds.top;
     
-    switch (side) {
-      case 0: // top
-        x = bounds.left + Math.random() * bounds.width;
-        y = bounds.top - 10;
-        vx = (Math.random() - 0.5) * 30;
-        vy = -20 - Math.random() * 20;
-        break;
-      case 1: // right
-        x = bounds.right + 10;
-        y = bounds.top + Math.random() * bounds.height;
-        vx = 20 + Math.random() * 20;
-        vy = (Math.random() - 0.5) * 30;
-        break;
-      case 2: // bottom
-        x = bounds.left + Math.random() * bounds.width;
-        y = bounds.bottom + 10;
-        vx = (Math.random() - 0.5) * 30;
-        vy = 20 + Math.random() * 20;
-        break;
-      case 3: // left
-        x = bounds.left - 10;
-        y = bounds.top + Math.random() * bounds.height;
-        vx = -20 - Math.random() * 20;
-        vy = (Math.random() - 0.5) * 30;
-        break;
-    }
+    // Spawn only from the top edge
+    const x = (bounds.left - offsetX + Math.random() * bounds.width) / zoom;
+    const y = (bounds.top - offsetY - 10) / zoom;
+    const vx = (Math.random() - 0.5) * 30 / zoom;
+    const vy = (-20 - Math.random() * 20) / zoom;
     
     const particle: Particle = {
       id: this.nextId++,

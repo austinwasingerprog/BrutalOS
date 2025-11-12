@@ -1,10 +1,11 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, ElementRef, effect } from '@angular/core';
 import { NotepadComponent } from '../notepad/notepad.component';
 import { TodoComponent } from '../todo/todo.component';
 import { CalculatorComponent } from '../calculator/calculator.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { ParticleOverlayComponent } from '../particle-overlay/particle-overlay.component';
 import { PanService } from '../../core/pan.service';
+import { DeskStateService } from '../../core/desk-state.service';
 
 @Component({
   selector: 'app-desk',
@@ -14,21 +15,36 @@ import { PanService } from '../../core/pan.service';
 })
 export class DeskComponent {
   private panService = inject(PanService);
+  private deskStateService = inject(DeskStateService);
+  private elementRef = inject(ElementRef);
   
   protected deskX = signal(0);
   protected deskY = signal(0);
   protected zoom = signal(1);
   protected cursorStyle = computed(() => this.panService.getCursorStyle());
   
+  constructor() {
+    // Sync zoom with desk state service
+    effect(() => {
+      this.deskStateService.setZoom(this.zoom());
+    });
+    
+    // Set desk surface element reference after view init
+    setTimeout(() => {
+      const deskSurface = this.elementRef.nativeElement.querySelector('.desk-surface');
+      if (deskSurface) {
+        this.deskStateService.setDeskSurface(deskSurface);
+      }
+    });
+  }
+  
   private maxPan = 600;
-  private minZoom = 0.5;
-  private maxZoom = 2.0;
-  private zoomStep = 0.1;
+  private readonly minZoom = 0.5;
+  private readonly maxZoom = 2.0;
+  private readonly zoomStep = 0.1;
   private isMiddleMousePan = false;
   
-  // Touch state for panning and zooming
-  private touchStartX = 0;
-  private touchStartY = 0;
+  // Touch state for pinch-to-zoom
   private touchStartZoom = 1;
   private initialPinchDistance = 0;
   
@@ -76,17 +92,15 @@ export class DeskComponent {
       const touch1 = event.touches[0];
       const touch2 = event.touches[1];
       
-      const centerX = (touch1.clientX + touch2.clientX) / 2;
-      const centerY = (touch1.clientY + touch2.clientY) / 2;
-      
       // Calculate initial distance for pinch detection
       const dx = touch2.clientX - touch1.clientX;
       const dy = touch2.clientY - touch1.clientY;
       this.initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
       
-      this.touchStartX = centerX;
-      this.touchStartY = centerY;
       this.touchStartZoom = this.zoom();
+      
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const centerY = (touch1.clientY + touch2.clientY) / 2;
       this.panService.startPan(centerX, centerY, false);
     }
   }

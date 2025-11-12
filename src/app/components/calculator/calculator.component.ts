@@ -1,4 +1,4 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { BaseWindowComponent } from '../../core/base-window.component';
 
 @Component({

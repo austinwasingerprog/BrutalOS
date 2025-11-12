@@ -2,6 +2,7 @@ import { Component, signal, computed, inject, OnInit, effect, Directive, Element
 import { WindowService } from './window.service';
 import { StorageService } from './storage.service';
 import { ParticleService } from './particle.service';
+import { DeskStateService } from './desk-state.service';
 
 @Directive()
 export abstract class BaseWindowComponent implements OnInit {
@@ -9,6 +10,7 @@ export abstract class BaseWindowComponent implements OnInit {
   protected storageService = inject(StorageService);
   protected particleService = inject(ParticleService);
   protected elementRef = inject(ElementRef);
+  protected deskStateService = inject(DeskStateService);
   
   // Subclasses must provide these
   protected abstract windowId: string;
@@ -22,6 +24,7 @@ export abstract class BaseWindowComponent implements OnInit {
   protected zIndex = signal(1);
   protected isMinimized = computed(() => this.windowService.isMinimized(this.windowId));
   protected isActive = computed(() => this.windowService.activeWindowId() === this.windowId);
+  private activationTrigger = signal(0); // Used to force particle restart on click
   
   // Dragging state
   private isDragging = false;
@@ -45,15 +48,19 @@ export abstract class BaseWindowComponent implements OnInit {
       const x = this.x(); // Track position changes
       const y = this.y();
       const isMin = this.isMinimized();
+      const trigger = this.activationTrigger(); // Track activation clicks
       
       if (isActive && !isMin) {
-        const element = this.elementRef.nativeElement.querySelector('.window, .window-container');
-        if (element) {
-          this.particleService.startEmitting(element, this.getParticleColor());
-        }
+        this.startParticles();
       } else {
         this.particleService.stopEmitting();
       }
+    });
+    
+    // Separate effect for zoom updates - doesn't trigger start/stop
+    effect(() => {
+      const zoom = this.deskStateService.zoom();
+      this.particleService.updateZoom(zoom);
     });
   }
   
@@ -130,9 +137,20 @@ export abstract class BaseWindowComponent implements OnInit {
     if (state) {
       this.zIndex.set(state.zIndex);
     }
+    
+    // Trigger particles when starting to drag
+    this.activationTrigger.update(v => v + 1);
   }
   
   protected abstract getParticleColor(): string;
+  
+  private startParticles(): void {
+    const element = this.elementRef.nativeElement.querySelector('.window, .window-container');
+    const container = this.deskStateService.getDeskSurface();
+    if (element && container) {
+      this.particleService.startEmitting(element, this.getParticleColor(), container);
+    }
+  }
   
   protected onMouseMove = (event: MouseEvent): void => {
     if (!this.isDragging) return;
@@ -188,5 +206,7 @@ export abstract class BaseWindowComponent implements OnInit {
     if (state) {
       this.zIndex.set(state.zIndex);
     }
+    // Increment to trigger particle effect
+    this.activationTrigger.update(v => v + 1);
   }
 }
