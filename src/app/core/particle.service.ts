@@ -56,6 +56,14 @@ export class ParticleService {
     }
   }
   
+  updateWindowPosition(windowId: string, windowElement: HTMLElement, containerElement: HTMLElement): void {
+    if (this.activeWindowId === windowId) {
+      this.activeWindowElement = windowElement;
+      this.containerElement = containerElement;
+      this.captureBoundingBoxes();
+    }
+  }
+  
   private ensureAnimationIsRunning(): void {
     if (!this.animationFrameId) {
       this.lastAnimationTime = performance.now();
@@ -75,7 +83,6 @@ export class ParticleService {
     this.maybeSpawnParticle();
     this.updateExistingParticles(deltaTimeInSeconds);
     
-    // Stop animation if no active window and no particles
     if (this.shouldStopAnimation()) {
       this.stopAnimation();
     } else {

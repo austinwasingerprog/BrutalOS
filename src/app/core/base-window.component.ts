@@ -63,6 +63,18 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
         this.particleService.stopEmitting(this.windowId);
       }
     });
+    
+    // Update particle positions when window moves
+    effect(() => {
+      const x = this.x();
+      const y = this.y();
+      const windowElement = this.windowContainer()?.nativeElement;
+      const deskContainer = this.deskStateService.getDeskSurface();
+      
+      if (this.isActive() && !this.isMinimized() && windowElement && deskContainer) {
+        this.particleService.updateWindowPosition(this.windowId, windowElement, deskContainer);
+      }
+    });
   }
 
   private setupZoomTracking(): void {
