@@ -19,7 +19,7 @@
 
 .notepad-header {
   background: var(--accent-pink);
-  color: var(--text-primary);
+  color: var(--header-text);
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;

@@ -1,11 +1,14 @@
-import { Component, signal, computed, inject, OnInit, effect, Directive } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, effect, Directive, ElementRef } from '@angular/core';
 import { WindowService } from './window.service';
 import { StorageService } from './storage.service';
+import { ParticleService } from './particle.service';
 
 @Directive()
 export abstract class BaseWindowComponent implements OnInit {
   protected windowService = inject(WindowService);
   protected storageService = inject(StorageService);
+  protected particleService = inject(ParticleService);
+  protected elementRef = inject(ElementRef);
   
   // Subclasses must provide these
   protected abstract windowId: string;
@@ -18,6 +21,7 @@ export abstract class BaseWindowComponent implements OnInit {
   protected y = signal(0);
   protected zIndex = signal(1);
   protected isMinimized = computed(() => this.windowService.isMinimized(this.windowId));
+  protected isActive = computed(() => this.windowService.activeWindowId() === this.windowId);
   
   // Dragging state
   private isDragging = false;
@@ -33,6 +37,19 @@ export abstract class BaseWindowComponent implements OnInit {
       const y = this.y();
       const isMinimized = this.isMinimized();
       this.storageService.saveWindowState(this.storageKey, x, y, isMinimized);
+    });
+    
+    // Emit particles when window is active
+    effect(() => {
+      const isActive = this.isActive();
+      if (isActive && !this.isMinimized()) {
+        const element = this.elementRef.nativeElement.querySelector('.window, .window-container');
+        if (element) {
+          this.particleService.startEmitting(element, this.getParticleColor());
+        }
+      } else {
+        this.particleService.stopEmitting();
+      }
     });
   }
   
@@ -110,6 +127,8 @@ export abstract class BaseWindowComponent implements OnInit {
       this.zIndex.set(state.zIndex);
     }
   }
+  
+  protected abstract getParticleColor(): string;
   
   protected onMouseMove = (event: MouseEvent): void => {
     if (!this.isDragging) return;

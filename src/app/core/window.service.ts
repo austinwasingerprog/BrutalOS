@@ -14,6 +14,7 @@ export interface WindowState {
 })
 export class WindowService {
   windows = signal<Map<string, WindowState>>(new Map());
+  activeWindowId = signal<string | null>(null);
   private nextZIndex = 1;
   
   registerWindow(id: string, title: string, x: number, y: number): void {
@@ -50,6 +51,7 @@ export class WindowService {
   }
   
   bringToFront(id: string): void {
+    this.activeWindowId.set(id);
     this.windows.update(map => {
       const newMap = new Map(map);
       const window = newMap.get(id);

@@ -21,6 +21,10 @@ export class SettingsComponent extends BaseWindowComponent {
     return { x: 450, y: 250 };
   }
   
+  protected override getParticleColor(): string {
+    return 'limegreen';
+  }
+  
   onThemeChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     this.themeService.setTheme(select.value as Theme);

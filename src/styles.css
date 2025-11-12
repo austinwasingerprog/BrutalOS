@@ -7,6 +7,7 @@
   --text-secondary: #333;
   --border-color: black;
   --shadow-color: rgba(0, 0, 0, 0.3);
+  --header-text: black;  /* Black text on vibrant headers */
   --accent-cyan: #0ff;
   --accent-yellow: #ff0;
   --accent-pink: #ff1493;
@@ -17,12 +18,13 @@
 
 [data-theme="dark"] {
   /* Dark theme */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2a2a2a;
+  --bg-primary: #222;
+  --bg-secondary: #333;
   --text-primary: white;
   --text-secondary: #e0e0e0;
-  --border-color: white;
+  --border-color: black;
   --shadow-color: rgba(255, 255, 255, 0.3);
+  --header-text: black;  /* White text on dark backgrounds */
   /* Keep bright accents for neo-brutalist punch */
   --accent-cyan: #0ff;
   --accent-yellow: #ff0;

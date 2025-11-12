@@ -39,6 +39,10 @@ export class TodoComponent extends BaseWindowComponent {
     };
   }
   
+  protected override getParticleColor(): string {
+    return '#0ff'; // cyan
+  }
+  
   override ngOnInit(): void {
     // Load persisted state
     const stored = this.storageService.loadTodo();
