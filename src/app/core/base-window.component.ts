@@ -1,11 +1,11 @@
-import { signal, computed, inject, OnInit, effect, Directive, ElementRef } from '@angular/core';
+import { signal, computed, inject, OnInit, OnDestroy, effect, Directive, ElementRef } from '@angular/core';
 import { WindowService } from './window.service';
 import { StorageService } from './storage.service';
 import { ParticleService } from './particle.service';
 import { DeskStateService } from './desk-state.service';
 
 @Directive()
-export abstract class BaseWindowComponent implements OnInit {
+export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   protected windowService = inject(WindowService);
   protected storageService = inject(StorageService);
   protected particleService = inject(ParticleService);
@@ -20,11 +20,10 @@ export abstract class BaseWindowComponent implements OnInit {
 
   protected x = signal(0);
   protected y = signal(0);
-  protected zIndex = signal(1);
+  protected zIndex = computed(() => this.windowService.getWindow(this.windowId)?.zIndex ?? 1);
   protected isMinimized = computed(() => this.windowService.isMinimized(this.windowId));
   protected isActive = computed(() => this.windowService.activeWindowId() === this.windowId);
 
-  private activationTrigger = signal(0);
   private isDragging = false;
   private dragStartX = 0;
   private dragStartY = 0;
@@ -48,15 +47,19 @@ export abstract class BaseWindowComponent implements OnInit {
 
   private setupParticleEffects(): void {
     effect(() => {
-      const isActive = this.isActive();
-      const isMinimized = this.isMinimized();
-      const position = { x: this.x(), y: this.y() };
-      this.activationTrigger();
+      const shouldEmit = this.isActive() && !this.isMinimized();
+      const windowElement = this.getWindowElement();
+      const deskContainer = this.deskStateService.getDeskSurface();
 
-      if (isActive && !isMinimized) {
-        this.startParticleEmission();
+      if (shouldEmit && windowElement && deskContainer) {
+        this.particleService.startEmitting(
+          this.windowId,
+          windowElement,
+          this.getParticleColor(),
+          deskContainer
+        );
       } else {
-        this.particleService.stopEmitting();
+        this.particleService.stopEmitting(this.windowId);
       }
     });
   }
@@ -68,21 +71,16 @@ export abstract class BaseWindowComponent implements OnInit {
     });
   }
 
-  private startParticleEmission(): void {
-    const windowElement = this.getWindowElement();
-    const deskContainer = this.deskStateService.getDeskSurface();
-
-    if (windowElement && deskContainer) {
-      this.particleService.startEmitting(windowElement, this.getParticleColor(), deskContainer);
-    }
-  }
-
   private getWindowElement(): HTMLElement | null {
     return this.elementRef.nativeElement.querySelector('.window, .window-container');
   }
 
   ngOnInit(): void {
     this.initializeWindowFromStorage();
+  }
+
+  ngOnDestroy(): void {
+    this.particleService.stopEmitting(this.windowId);
   }
 
   private initializeWindowFromStorage(): void {
@@ -114,7 +112,6 @@ export abstract class BaseWindowComponent implements OnInit {
     if (windowState) {
       this.x.set(windowState.x);
       this.y.set(windowState.y);
-      this.zIndex.set(windowState.zIndex);
     }
   }
 
@@ -170,19 +167,6 @@ export abstract class BaseWindowComponent implements OnInit {
     this.dragStartY = clientY;
     this.windowStartX = this.x();
     this.windowStartY = this.y();
-  }
-
-  private bringWindowToFront(): void {
-    this.windowService.bringToFront(this.windowId);
-
-    const windowState = this.windowService.getWindow(this.windowId);
-    if (windowState) {
-      this.zIndex.set(windowState.zIndex);
-    }
-  }
-
-  private triggerParticleActivation(): void {
-    this.activationTrigger.update(count => count + 1);
   }
 
   protected onMouseMove = (event: MouseEvent): void => {
@@ -242,7 +226,6 @@ export abstract class BaseWindowComponent implements OnInit {
   }
 
   onFocus(): void {
-    this.bringWindowToFront();
-    this.triggerParticleActivation();
+    this.windowService.activateWindow(this.windowId);
   }
 }

@@ -15,7 +15,9 @@ export interface WindowState {
 export class WindowService {
   windows = signal<Map<string, WindowState>>(new Map());
   activeWindowId = signal<string | null>(null);
-  private nextZIndex = 1;
+  
+  private readonly baseZIndex = 10;
+  private nextZIndex = 10;
   
   registerWindow(id: string, title: string, x: number, y: number): void {
     const state: WindowState = {
@@ -50,8 +52,9 @@ export class WindowService {
     });
   }
   
-  bringToFront(id: string): void {
+  activateWindow(id: string): void {
     this.activeWindowId.set(id);
+    
     this.windows.update(map => {
       const newMap = new Map(map);
       const window = newMap.get(id);
@@ -62,6 +65,10 @@ export class WindowService {
     });
   }
   
+  bringToFront(id: string): void {
+    this.activateWindow(id);
+  }
+  
   toggleMinimize(id: string): void {
     this.windows.update(map => {
       const newMap = new Map(map);
@@ -69,8 +76,11 @@ export class WindowService {
       if (window) {
         window.isMinimized = !window.isMinimized;
         if (!window.isMinimized) {
-          // Bring to front when restoring
-          window.zIndex = this.nextZIndex++;
+          // Restore also activates
+          this.activateWindow(id);
+        } else if (this.activeWindowId() === id) {
+          // If minimizing active window, clear active state
+          this.activeWindowId.set(null);
         }
       }
       return newMap;

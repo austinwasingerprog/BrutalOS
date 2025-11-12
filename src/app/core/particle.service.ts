@@ -21,33 +21,38 @@ export class ParticleService {
   private animationFrameId: number | null = null;
   private lastAnimationTime = 0;
   
-  private activeWindowBounds: DOMRect | null = null;
+  private activeWindowId: string | null = null;
   private activeWindowElement: HTMLElement | null = null;
-  private containerBounds: DOMRect | null = null;
   private containerElement: HTMLElement | null = null;
+  private windowBounds: DOMRect | null = null;
+  private containerBounds: DOMRect | null = null;
   
   private currentColor = '#ff1493';
   private currentZoom = 1;
   
-  startEmitting(windowElement: HTMLElement, color: string, containerElement: HTMLElement): void {
-    this.captureEmissionContext(windowElement, color, containerElement);
+  startEmitting(windowId: string, windowElement: HTMLElement, color: string, containerElement: HTMLElement): void {
+    this.activeWindowId = windowId;
+    this.activeWindowElement = windowElement;
+    this.containerElement = containerElement;
+    this.currentColor = color;
+    this.captureBoundingBoxes();
+    
     this.ensureAnimationIsRunning();
   }
   
-  private captureEmissionContext(windowElement: HTMLElement, color: string, containerElement: HTMLElement): void {
-    this.currentColor = color;
-    this.activeWindowElement = windowElement;
-    this.containerElement = containerElement;
-    this.refreshBoundingBoxes();
-  }
-  
-  private refreshBoundingBoxes(): void {
-    if (this.containerElement) {
+  private captureBoundingBoxes(): void {
+    if (this.activeWindowElement && this.containerElement) {
+      this.windowBounds = this.activeWindowElement.getBoundingClientRect();
       this.containerBounds = this.containerElement.getBoundingClientRect();
     }
-    
-    if (this.activeWindowElement) {
-      this.activeWindowBounds = this.activeWindowElement.getBoundingClientRect();
+  }
+  
+  stopEmitting(windowId: string): void {
+    if (this.activeWindowId === windowId) {
+      this.activeWindowId = null;
+      this.activeWindowElement = null;
+      this.windowBounds = null;
+      this.containerBounds = null;
     }
   }
   
@@ -62,31 +67,42 @@ export class ParticleService {
     this.currentZoom = zoom;
   }
   
-  stopEmitting(): void {
-    this.activeWindowElement = null;
-    this.activeWindowBounds = null;
-  }
-  
   private runAnimationLoop = (): void => {
     const currentTime = performance.now();
     const deltaTimeInSeconds = (currentTime - this.lastAnimationTime) / 1000;
     this.lastAnimationTime = currentTime;
     
-    this.refreshBoundingBoxes();
     this.maybeSpawnParticle();
     this.updateExistingParticles(deltaTimeInSeconds);
-    this.scheduleNextFrame();
+    
+    // Stop animation if no active window and no particles
+    if (this.shouldStopAnimation()) {
+      this.stopAnimation();
+    } else {
+      this.scheduleNextFrame();
+    }
   };
+  
+  private shouldStopAnimation(): boolean {
+    return !this.activeWindowElement && this.particles().length === 0;
+  }
+  
+  private stopAnimation(): void {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+  }
   
   private maybeSpawnParticle(): void {
     if (!this.canSpawnParticles()) return;
     if (Math.random() >= 0.3) return;
     
-    this.createParticle(this.activeWindowBounds!, this.containerBounds!, this.currentZoom);
+    this.createParticle(this.windowBounds!, this.containerBounds!, this.currentZoom);
   }
   
   private canSpawnParticles(): boolean {
-    return this.activeWindowBounds !== null && this.containerBounds !== null;
+    return this.windowBounds !== null && this.containerBounds !== null;
   }
   
   private scheduleNextFrame(): void {
@@ -161,10 +177,7 @@ export class ParticleService {
   }
   
   destroy(): void {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
-    }
+    this.stopAnimation();
     this.particles.set([]);
   }
 }
