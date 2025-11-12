@@ -184,7 +184,6 @@ export abstract class BaseWindowComponent implements OnInit {
   }
 
   private triggerParticleActivation(): void {
-    console.log('Triggering particle activation, active window id:', this.windowService.activeWindowId());
     this.activationTrigger.update(count => count + 1);
   }
 
