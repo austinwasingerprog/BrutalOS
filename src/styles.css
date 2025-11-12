@@ -1,3 +1,37 @@
+/* CSS Custom Properties (Variables) for Theming */
+:root {
+  /* Light theme (default) */
+  --bg-primary: white;
+  --bg-secondary: #f0f0f0;
+  --text-primary: black;
+  --text-secondary: #333;
+  --border-color: black;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --accent-cyan: cyan;
+  --accent-yellow: yellow;
+  --accent-pink: hotpink;
+  --accent-green: limegreen;
+  --todo-bg: #fffacd;  /* Pale yellow for todo app */
+  --todo-line: #4169e1;  /* Blue lines for todo app */
+}
+
+[data-theme="dark"] {
+  /* Dark theme */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2a2a2a;
+  --text-primary: white;
+  --text-secondary: #e0e0e0;
+  --border-color: white;
+  --shadow-color: rgba(255, 255, 255, 0.3);
+  /* Keep bright accents for neo-brutalist punch */
+  --accent-cyan: cyan;
+  --accent-yellow: yellow;
+  --accent-pink: hotpink;
+  --accent-green: limegreen;
+  --todo-bg: #3a3a1a;  /* Dark yellow-tinted background */
+  --todo-line: #6495ed;  /* Lighter blue for visibility */
+}
+
 /* Global styles */
 * {
   box-sizing: border-box;
@@ -13,6 +47,8 @@ html, body {
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Allow selection in text inputs and textareas */

@@ -14,9 +14,9 @@
 }
 
 .taskbar-item {
-  background: #fff;
-  color: #000;
-  border: 4px solid #000;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 4px solid var(--border-color);
   padding: 16px 24px;
   font-family: 'Courier New', monospace;
   font-size: 14px;
@@ -27,13 +27,13 @@
   gap: 12px;
   transition: all 0.1s;
   text-transform: uppercase;
-  box-shadow: 5px 5px 0 #000;
+  box-shadow: 5px 5px 0 var(--shadow-color);
 }
 
 .taskbar-item:hover {
-  background: #ff1493;
-  color: #fff;
-  box-shadow: 7px 7px 0 #000;
+  background: var(--accent-pink);
+  color: var(--text-primary);
+  box-shadow: 7px 7px 0 var(--shadow-color);
   transform: translate(-2px, -2px);
 }
 

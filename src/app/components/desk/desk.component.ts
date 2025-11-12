@@ -2,11 +2,12 @@ import { Component, signal, computed, inject } from '@angular/core';
 import { NotepadComponent } from '../notepad/notepad.component';
 import { TodoComponent } from '../todo/todo.component';
 import { CalculatorComponent } from '../calculator/calculator.component';
+import { SettingsComponent } from '../settings/settings.component';
 import { PanService } from '../../core/pan.service';
 
 @Component({
   selector: 'app-desk',
-  imports: [NotepadComponent, TodoComponent, CalculatorComponent],
+  imports: [NotepadComponent, TodoComponent, CalculatorComponent, SettingsComponent],
   templateUrl: './desk.component.html',
   styleUrl: './desk.component.css'
 })

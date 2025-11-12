@@ -1,0 +1,23 @@
+<div class="window" 
+     [class.minimized]="isMinimized()"
+     [style.left.px]="x()"
+     [style.top.px]="y()"
+     [style.z-index]="zIndex()">
+  <div class="window-header" 
+       (mousedown)="onHeaderMouseDown($event)"
+       (touchstart)="onHeaderTouchStart($event)">
+    <span class="window-title">{{ windowTitle }}</span>
+    <button class="window-button minimize-button" (click)="onMinimize()">_</button>
+  </div>
+  <div class="window-content">
+    <div class="settings-section">
+      <label class="settings-label">Theme</label>
+      <select class="theme-select" 
+              [value]="theme()" 
+              (change)="onThemeChange($event)">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+  </div>
+</div>

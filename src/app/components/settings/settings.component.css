@@ -1,0 +1,100 @@
+.window {
+  position: absolute;
+  width: 280px;
+  background: var(--bg-primary);
+  border: 4px solid var(--border-color);
+  box-shadow: 8px 8px 0 var(--shadow-color);
+  font-family: 'Courier New', monospace;
+  display: flex;
+  flex-direction: column;
+}
+
+.window.minimized {
+  display: none;
+}
+
+.window-header {
+  background: var(--accent-green);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: move;
+  user-select: none;
+  border-bottom: 4px solid var(--border-color);
+}
+
+.window-title {
+  flex: 1;
+  text-transform: uppercase;
+}
+
+.window-button {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  font-size: 16px;
+  font-weight: bold;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.window-button:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.window-button:active {
+  box-shadow: inset 2px 2px 0 var(--shadow-color);
+}
+
+.window-content {
+  padding: 20px;
+  flex: 1;
+  overflow: auto;
+}
+
+.settings-section {
+  margin-bottom: 20px;
+}
+
+.settings-label {
+  display: block;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.theme-select {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 3px solid var(--border-color);
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.theme-select:hover {
+  background: var(--bg-secondary);
+}
+
+.theme-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-cyan);
+}
