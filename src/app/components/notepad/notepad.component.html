@@ -4,11 +4,11 @@
     [style.--window-y.px]="y()" 
     [style.--window-z]="zIndex()"
     class="window-container"
+    (mousedown)="onFocus()"
   >
     <div class="notepad-header" 
          (mousedown)="onHeaderMouseDown($event)" 
-         (touchstart)="onHeaderTouchStart($event)"
-         (click)="onFocus()">
+         (touchstart)="onHeaderTouchStart($event)">
       <div class="notepad-title">NOTEPAD.EXE</div>
       <div class="notepad-buttons">
         <button class="notepad-btn" (click)="onMinimize()" title="Minimize">_</button>

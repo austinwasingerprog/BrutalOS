@@ -2,11 +2,11 @@
      [class.minimized]="isMinimized()"
      [style.left.px]="x()"
      [style.top.px]="y()"
-     [style.z-index]="zIndex()">
+     [style.z-index]="zIndex()"
+     (mousedown)="onFocus()">
   <div class="window-header" 
        (mousedown)="onHeaderMouseDown($event)"
-       (touchstart)="onHeaderTouchStart($event)"
-       (click)="onFocus()">
+       (touchstart)="onHeaderTouchStart($event)">
     <span class="window-title">{{ windowTitle }}</span>
     <button class="window-button minimize-button" (click)="onMinimize()">_</button>
   </div>

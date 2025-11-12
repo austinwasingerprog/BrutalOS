@@ -162,8 +162,6 @@ export abstract class BaseWindowComponent implements OnInit {
 
   private beginDrag(clientX: number, clientY: number): void {
     this.captureDragStartPosition(clientX, clientY);
-    this.bringWindowToFront();
-    this.triggerParticleActivation();
   }
 
   private captureDragStartPosition(clientX: number, clientY: number): void {
