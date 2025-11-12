@@ -72,9 +72,35 @@ export abstract class BaseWindowComponent implements OnInit {
     }
     
     event.preventDefault();
+    this.startDrag(event.clientX, event.clientY);
+    
+    document.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mouseup', this.onMouseUp);
+  }
+  
+  onHeaderTouchStart(event: TouchEvent): void {
+    if ((event.target as HTMLElement).closest('button')) {
+      return; // Don't drag if touching a button
+    }
+    
+    // Only handle single touch
+    if (event.touches.length !== 1) {
+      return;
+    }
+    
+    event.preventDefault();
+    const touch = event.touches[0];
+    this.startDrag(touch.clientX, touch.clientY);
+    
+    document.addEventListener('touchmove', this.onTouchMove, { passive: false });
+    document.addEventListener('touchend', this.onTouchEnd);
+    document.addEventListener('touchcancel', this.onTouchEnd);
+  }
+  
+  private startDrag(clientX: number, clientY: number): void {
     this.isDragging = true;
-    this.dragStartX = event.clientX;
-    this.dragStartY = event.clientY;
+    this.dragStartX = clientX;
+    this.dragStartY = clientY;
     this.windowStartX = this.x();
     this.windowStartY = this.y();
     
@@ -83,9 +109,6 @@ export abstract class BaseWindowComponent implements OnInit {
     if (state) {
       this.zIndex.set(state.zIndex);
     }
-    
-    document.addEventListener('mousemove', this.onMouseMove);
-    document.addEventListener('mouseup', this.onMouseUp);
   }
   
   protected onMouseMove = (event: MouseEvent): void => {
@@ -106,6 +129,30 @@ export abstract class BaseWindowComponent implements OnInit {
     this.isDragging = false;
     document.removeEventListener('mousemove', this.onMouseMove);
     document.removeEventListener('mouseup', this.onMouseUp);
+  };
+  
+  protected onTouchMove = (event: TouchEvent): void => {
+    if (!this.isDragging || event.touches.length !== 1) return;
+    
+    event.preventDefault();
+    const touch = event.touches[0];
+    
+    const deltaX = touch.clientX - this.dragStartX;
+    const deltaY = touch.clientY - this.dragStartY;
+    
+    const newX = this.windowStartX + deltaX;
+    const newY = this.windowStartY + deltaY;
+    
+    this.x.set(newX);
+    this.y.set(newY);
+    this.windowService.updatePosition(this.windowId, newX, newY);
+  };
+  
+  protected onTouchEnd = (): void => {
+    this.isDragging = false;
+    document.removeEventListener('touchmove', this.onTouchMove);
+    document.removeEventListener('touchend', this.onTouchEnd);
+    document.removeEventListener('touchcancel', this.onTouchEnd);
   };
   
   onMinimize(): void {
