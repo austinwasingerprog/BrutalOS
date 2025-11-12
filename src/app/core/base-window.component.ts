@@ -39,10 +39,14 @@ export abstract class BaseWindowComponent implements OnInit {
       this.storageService.saveWindowState(this.storageKey, x, y, isMinimized);
     });
     
-    // Emit particles when window is active
+    // Emit particles when window is active or position changes
     effect(() => {
       const isActive = this.isActive();
-      if (isActive && !this.isMinimized()) {
+      const x = this.x(); // Track position changes
+      const y = this.y();
+      const isMin = this.isMinimized();
+      
+      if (isActive && !isMin) {
         const element = this.elementRef.nativeElement.querySelector('.window, .window-container');
         if (element) {
           this.particleService.startEmitting(element, this.getParticleColor());

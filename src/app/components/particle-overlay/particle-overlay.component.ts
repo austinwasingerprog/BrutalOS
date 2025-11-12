@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ParticleService } from '../../core/particle.service';
 
 @Component({
@@ -20,10 +20,11 @@ import { ParticleService } from '../../core/particle.service';
   `,
   styles: [`
     .particle-overlay {
-      position: fixed;
+      position: absolute;
       inset: 0;
       pointer-events: none;
-      z-index: 9999;
+      z-index: 10;
+      overflow: visible;
     }
     
     .particle {

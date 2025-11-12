@@ -3,11 +3,12 @@ import { NotepadComponent } from '../notepad/notepad.component';
 import { TodoComponent } from '../todo/todo.component';
 import { CalculatorComponent } from '../calculator/calculator.component';
 import { SettingsComponent } from '../settings/settings.component';
+import { ParticleOverlayComponent } from '../particle-overlay/particle-overlay.component';
 import { PanService } from '../../core/pan.service';
 
 @Component({
   selector: 'app-desk',
-  imports: [NotepadComponent, TodoComponent, CalculatorComponent, SettingsComponent],
+  imports: [NotepadComponent, TodoComponent, CalculatorComponent, SettingsComponent, ParticleOverlayComponent],
   templateUrl: './desk.component.html',
   styleUrl: './desk.component.css'
 })

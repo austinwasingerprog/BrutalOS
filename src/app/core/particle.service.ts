@@ -25,6 +25,7 @@ export class ParticleService {
   
   startEmitting(element: HTMLElement, color: string): void {
     this.particleColor = color;
+    this.activeElement = element;
     this.activeWindowBounds = element.getBoundingClientRect();
     
     if (!this.animationFrame) {
@@ -34,13 +35,21 @@ export class ParticleService {
   }
   
   stopEmitting(): void {
+    this.activeElement = null;
     this.activeWindowBounds = null;
   }
+  
+  private activeElement: HTMLElement | null = null;
   
   private animate = (): void => {
     const currentTime = performance.now();
     const deltaTime = (currentTime - this.lastTime) / 1000; // seconds
     this.lastTime = currentTime;
+    
+    // Update bounds from active element (tracks movement)
+    if (this.activeElement) {
+      this.activeWindowBounds = this.activeElement.getBoundingClientRect();
+    }
     
     // Spawn new particles if we have an active window
     if (this.activeWindowBounds && Math.random() < 0.3) {
