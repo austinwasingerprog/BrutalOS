@@ -1,5 +1,6 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, effect } from '@angular/core';
 import { WindowService } from '../../core/window.service';
+import { StorageService } from '../../core/storage.service';
 
 @Component({
   selector: 'app-notepad',
@@ -9,6 +10,7 @@ import { WindowService } from '../../core/window.service';
 })
 export class NotepadComponent implements OnInit {
   private windowService = inject(WindowService);
+  private storageService = inject(StorageService);
   private readonly windowId = 'notepad-1';
   
   protected content = signal('');
@@ -28,12 +30,19 @@ export class NotepadComponent implements OnInit {
   private windowStartY = 0;
   
   ngOnInit(): void {
-    // Center notepad on screen initially
-    const initialX = window.innerWidth / 2 - 200; // 200 is half of notepad width (400px)
-    const initialY = window.innerHeight / 2 - 250; // 250 is half of notepad height (500px)
+    // Load persisted state
+    const stored = this.storageService.loadNotepad();
+    this.content.set(stored.content);
+    
+    // Use stored position or center on screen
+    const initialX = stored.window.x || window.innerWidth / 2 - 200;
+    const initialY = stored.window.y || window.innerHeight / 2 - 250;
     
     // Register window with service
     this.windowService.registerWindow(this.windowId, 'NOTEPAD.TXT', initialX, initialY);
+    if (stored.window.isMinimized) {
+      this.windowService.toggleMinimize(this.windowId);
+    }
     
     // Sync with service state
     const state = this.windowService.getWindow(this.windowId);
@@ -42,6 +51,19 @@ export class NotepadComponent implements OnInit {
       this.y.set(state.y);
       this.zIndex.set(state.zIndex);
     }
+    
+    // Auto-save content changes
+    effect(() => {
+      this.storageService.saveNotepadContent(this.content());
+    });
+    
+    // Auto-save window position changes
+    effect(() => {
+      const x = this.x();
+      const y = this.y();
+      const isMinimized = this.isMinimized();
+      this.storageService.saveNotepadWindow(x, y, isMinimized);
+    });
   }
   
   onHeaderMouseDown(event: MouseEvent): void {

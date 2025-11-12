@@ -1,11 +1,6 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, effect } from '@angular/core';
 import { WindowService } from '../../core/window.service';
-
-interface TodoItem {
-  id: number;
-  text: string;
-  completed: boolean;
-}
+import { StorageService, TodoItem } from '../../core/storage.service';
 
 @Component({
   selector: 'app-todo',
@@ -15,6 +10,7 @@ interface TodoItem {
 })
 export class TodoComponent implements OnInit {
   private windowService = inject(WindowService);
+  private storageService = inject(StorageService);
   private readonly windowId = 'todo-1';
   
   protected todos = signal<TodoItem[]>([]);
@@ -41,12 +37,20 @@ export class TodoComponent implements OnInit {
   private windowStartY = 0;
   
   ngOnInit(): void {
-    // Position todo list to the right of notepad
-    const initialX = window.innerWidth / 2 + 250;
-    const initialY = window.innerHeight / 2 - 250;
+    // Load persisted state
+    const stored = this.storageService.loadTodo();
+    this.todos.set(stored.todos);
+    this.nextId = stored.nextId;
+    
+    // Use stored position or default to right of notepad
+    const initialX = stored.window.x || window.innerWidth / 2 + 250;
+    const initialY = stored.window.y || window.innerHeight / 2 - 250;
     
     // Register window with service
     this.windowService.registerWindow(this.windowId, 'TODO.TXT', initialX, initialY);
+    if (stored.window.isMinimized) {
+      this.windowService.toggleMinimize(this.windowId);
+    }
     
     // Sync with service state
     const state = this.windowService.getWindow(this.windowId);
@@ -55,6 +59,19 @@ export class TodoComponent implements OnInit {
       this.y.set(state.y);
       this.zIndex.set(state.zIndex);
     }
+    
+    // Auto-save todos changes
+    effect(() => {
+      this.storageService.saveTodos(this.todos(), this.nextId);
+    });
+    
+    // Auto-save window position changes
+    effect(() => {
+      const x = this.x();
+      const y = this.y();
+      const isMinimized = this.isMinimized();
+      this.storageService.saveTodoWindow(x, y, isMinimized);
+    });
   }
   
   onHeaderMouseDown(event: MouseEvent): void {

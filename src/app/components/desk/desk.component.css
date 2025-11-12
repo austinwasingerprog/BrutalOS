@@ -3,7 +3,7 @@
   height: 100%;
   position: relative;
   overflow: hidden;
-  background: #000;
+  background: #fff;
 }
 
 .desk {
@@ -20,8 +20,8 @@
 .desk-surface {
   width: 100%;
   height: 100%;
-  background: #2a2a2a;
-  border: 6px solid #ff0;
+  background: #fff;
+  border: 4px solid #000;
   position: relative;
-  box-shadow: 0 0 0 12px #f0f, 0 0 0 18px #00f;
+  box-shadow: 12px 12px 0 #000;
 }
