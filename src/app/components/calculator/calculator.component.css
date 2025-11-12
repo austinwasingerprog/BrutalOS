@@ -119,7 +119,7 @@
 
 .calc-key.operation {
   background: var(--accent-cyan);
-  color: var(--text-primary);
+  color: var(--header-text);
 }
 
 .calc-key.operation:hover {
