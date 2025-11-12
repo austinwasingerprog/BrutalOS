@@ -1,0 +1,15 @@
+<div 
+  class="viewport" 
+  [style.cursor]="cursorStyle()"
+  (mousedown)="onMouseDown($event)"
+  (mousemove)="onMouseMove($event)"
+  (mouseup)="onMouseUp($event)"
+  (mouseleave)="onMouseLeave()"
+>
+  <div class="desk" [style.transform]="'translate(' + deskX() + 'px, ' + deskY() + 'px)'">
+    <div class="desk-surface">
+      <app-notepad />
+      <app-todo />
+    </div>
+  </div>
+</div>

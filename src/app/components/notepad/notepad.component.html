@@ -1,0 +1,28 @@
+@if (!isMinimized()) {
+  <div 
+    [style.--window-x.px]="x()" 
+    [style.--window-y.px]="y()" 
+    [style.--window-z]="zIndex()"
+    class="window-container"
+  >
+    <div class="notepad-header" (mousedown)="onHeaderMouseDown($event)">
+      <div class="notepad-title">NOTEPAD.EXE</div>
+      <div class="notepad-buttons">
+        <button class="notepad-btn" (click)="onMinimize()" title="Minimize">_</button>
+      </div>
+    </div>
+    <textarea 
+      class="notepad-content"
+      placeholder="START TYPING..."
+      [value]="content()"
+      (input)="onInput($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      spellcheck="false"
+    ></textarea>
+    <div class="notepad-footer">
+      <span>CHARS: {{ content().length }}</span>
+      <span>BRUTAL OS v1.0</span>
+    </div>
+  </div>
+}

@@ -1,0 +1,14 @@
+@if (minimizedWindows().length > 0) {
+  <div class="taskbar">
+    @for (window of minimizedWindows(); track window.id) {
+      <button 
+        class="taskbar-item"
+        (click)="restoreWindow(window.id)"
+        [title]="'Restore ' + window.title"
+      >
+        <span class="taskbar-icon">📝</span>
+        <span class="taskbar-label">{{ window.title }}</span>
+      </button>
+    }
+  </div>
+}

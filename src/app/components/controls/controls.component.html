@@ -1,0 +1,11 @@
+<div class="control-panel">
+  <button 
+    class="control-box"
+    [class.active]="panService.panModeActive()"
+    (click)="togglePanMode()"
+    title="Pan Mode (Middle-click or toggle)"
+  >
+    <span class="control-icon">✋</span>
+    <span class="control-label">PAN</span>
+  </button>
+</div>

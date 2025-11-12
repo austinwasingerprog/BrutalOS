@@ -1,0 +1,53 @@
+@if (!isMinimized()) {
+  <div class="window-container"
+       [style.--window-x.px]="x()"
+       [style.--window-y.px]="y()"
+       [style.--window-z]="zIndex()"
+       (mousedown)="onFocus()">
+    
+    <div class="todo-header" (mousedown)="onHeaderMouseDown($event)">
+      <span class="todo-title">📋 TODO.TXT</span>
+      <div class="todo-buttons">
+        <button class="todo-btn" (click)="onMinimize()" title="Minimize">_</button>
+      </div>
+    </div>
+    
+    <div class="todo-content">
+      <div class="todo-input-row">
+        <input 
+          type="text" 
+          class="todo-input"
+          [value]="newTodoText()"
+          (input)="onInputChange($event)"
+          (keydown)="onKeyDown($event)"
+          placeholder="Add new todo..."
+        />
+        <button class="todo-add-btn" (click)="addTodo()">+</button>
+      </div>
+      
+      <div class="todo-list">
+        @for (todo of todos(); track todo.id) {
+          <div class="todo-item" [class.completed]="todo.completed">
+            <label class="todo-checkbox-wrapper">
+              <input 
+                type="checkbox" 
+                [checked]="todo.completed"
+                (change)="toggleTodo(todo.id)"
+              />
+              <span class="todo-text">{{ todo.text }}</span>
+            </label>
+            <button class="todo-delete-btn" (click)="deleteTodo(todo.id)">×</button>
+          </div>
+        }
+        
+        @if (todos().length === 0) {
+          <div class="todo-empty">No todos yet. Add one above!</div>
+        }
+      </div>
+    </div>
+    
+    <div class="todo-footer">
+      <span>{{ remainingCount() }} / {{ totalCount() }} remaining</span>
+    </div>
+  </div>
+}

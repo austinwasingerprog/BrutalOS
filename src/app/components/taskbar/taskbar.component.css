@@ -1,0 +1,47 @@
+:host {
+  display: block;
+}
+
+.taskbar {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.taskbar-item {
+  background: #0000ff;
+  color: #ffff00;
+  border: 4px solid #ff1493;
+  padding: 12px 20px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.1s;
+  text-transform: uppercase;
+  box-shadow: 5px 5px 0 #00ffff;
+}
+
+.taskbar-item:hover {
+  background: #ff1493;
+  color: #00ffff;
+  border-color: #ffff00;
+  box-shadow: 6px 6px 0 #0000ff, 9px 9px 0 #000;
+  transform: translate(-2px, -2px);
+}
+
+.taskbar-icon {
+  font-size: 18px;
+}
+
+.taskbar-label {
+  font-size: 12px;
+}
