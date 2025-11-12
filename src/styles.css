@@ -7,9 +7,9 @@
   --text-secondary: #333;
   --border-color: black;
   --shadow-color: rgba(0, 0, 0, 0.3);
-  --accent-cyan: cyan;
-  --accent-yellow: yellow;
-  --accent-pink: hotpink;
+  --accent-cyan: #0ff;
+  --accent-yellow: #ff0;
+  --accent-pink: #ff1493;
   --accent-green: limegreen;
   --todo-bg: #fffacd;  /* Pale yellow for todo app */
   --todo-line: #4169e1;  /* Blue lines for todo app */
@@ -24,9 +24,9 @@
   --border-color: white;
   --shadow-color: rgba(255, 255, 255, 0.3);
   /* Keep bright accents for neo-brutalist punch */
-  --accent-cyan: cyan;
-  --accent-yellow: yellow;
-  --accent-pink: hotpink;
+  --accent-cyan: #0ff;
+  --accent-yellow: #ff0;
+  --accent-pink: #ff1493;
   --accent-green: limegreen;
   --todo-bg: #3a3a1a;  /* Dark yellow-tinted background */
   --todo-line: #6495ed;  /* Lighter blue for visibility */
