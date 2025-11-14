@@ -1,9 +1,9 @@
 import { Component, signal, computed, inject, ElementRef, effect, viewChild } from '@angular/core';
-import { NotepadComponent } from '../notepad/notepad.component';
-import { TodoComponent } from '../todo/todo.component';
-import { CalculatorComponent } from '../calculator/calculator.component';
-import { SettingsComponent } from '../settings/settings.component';
-import { DeskStateService } from '../../core/desk-state.service';
+import { NotepadComponent } from '../windows/notepad/notepad.component';
+import { TodoComponent } from '../windows/todo/todo.component';
+import { CalculatorComponent } from '../windows/calculator/calculator.component';
+import { SettingsComponent } from '../windows/settings/settings.component';
+import { WindowService } from '../../core/window.service';
 
 @Component({
   selector: 'app-desk',
@@ -12,16 +12,11 @@ import { DeskStateService } from '../../core/desk-state.service';
   styleUrl: './desk.component.css'
 })
 export class DeskComponent {
-  private deskStateService = inject(DeskStateService);
-  
-  // View query for the desk surface element
-  private deskSurface = viewChild<ElementRef<HTMLElement>>('deskSurface');
-  
+  protected windowService = inject(WindowService);
+ 
   protected deskX = signal(0);
   protected deskY = signal(0);
-  protected zoom = signal(1);
   
-  // Pan state (formerly in PanService)
   protected isPanning = signal(false);
   panModeActive = signal(false);
   private lastX = 0;
@@ -35,8 +30,6 @@ export class DeskComponent {
   });
   
   constructor() {
-    this.syncZoomWithGlobalState();
-    this.registerDeskSurfaceWithGlobalState();
   }
   
   private startPan(clientX: number, clientY: number, isMiddleClick: boolean = false): void {
@@ -63,21 +56,6 @@ export class DeskComponent {
   
   togglePanMode(): void {
     this.panModeActive.update(active => !active);
-  }
-  
-  private syncZoomWithGlobalState(): void {
-    effect(() => {
-      this.deskStateService.setZoom(this.zoom());
-    });
-  }
-  
-  private registerDeskSurfaceWithGlobalState(): void {
-    effect(() => {
-      const deskSurfaceElement = this.deskSurface()?.nativeElement;
-      if (deskSurfaceElement) {
-        this.deskStateService.setDeskSurface(deskSurfaceElement);
-      }
-    });
   }
   
   private maxPan = 600;
@@ -139,6 +117,7 @@ export class DeskComponent {
   
   onMouseLeave(): void {
     this.endPan();
+    this.windowService.stopDraggingAll();
   }
   
   onTouchStart(event: TouchEvent): void {
@@ -156,7 +135,7 @@ export class DeskComponent {
     const [touch1, touch2] = [event.touches[0], event.touches[1]];
     
     this.initialPinchDistance = this.calculateDistance(touch1, touch2);
-    this.touchStartZoom = this.zoom();
+    this.touchStartZoom = this.windowService.zoom();
     
     const centerPoint = this.calculateTouchCenter(touch1, touch2);
     this.startPan(centerPoint.x, centerPoint.y, false);
@@ -199,7 +178,7 @@ export class DeskComponent {
     const scale = currentDistance / this.initialPinchDistance;
     const newZoom = this.touchStartZoom * scale;
     const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
-    this.zoom.set(clampedZoom);
+    this.windowService.zoom.set(clampedZoom);
   }
   
   onTouchEnd(event: TouchEvent): void {
@@ -221,8 +200,8 @@ export class DeskComponent {
   private adjustZoomFromWheel(event: WheelEvent): void {
     const zoomDirection = event.deltaY > 0 ? -1 : 1;
     const delta = zoomDirection * this.zoomStep;
-    const newZoom = this.zoom() + delta;
+    const newZoom = this.windowService.zoom() + delta;
     const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
-    this.zoom.set(clampedZoom);
+    this.windowService.zoom.set(clampedZoom);
   }
 }

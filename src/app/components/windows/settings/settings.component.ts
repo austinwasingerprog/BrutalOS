@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { BaseWindowComponent } from '../../core/base-window.component';
-import { ThemeService, Theme } from '../../core/theme.service';
+import { BaseWindowComponent } from '../base-window.component';
+import { Theme, ThemeService } from '../../../core/theme.service';
 
 @Component({
   selector: 'app-settings',
@@ -12,8 +12,8 @@ import { ThemeService, Theme } from '../../core/theme.service';
 export class SettingsComponent extends BaseWindowComponent {
   private themeService = inject(ThemeService);
   
-  protected override windowId = 'settings';
-  protected override windowTitle = 'Settings';
+  public override windowId = 'settings';
+  public override windowTitle = 'Settings';
   protected override storageKey = 'brutalos_settings';
   
   protected theme = this.themeService.theme;

@@ -1,93 +1,63 @@
-import { Injectable, signal } from '@angular/core';
-
-export interface WindowState {
-  id: string;
-  title: string;
-  isMinimized: boolean;
-  x: number;
-  y: number;
-  zIndex: number;
-}
+import { inject, Injectable, signal } from '@angular/core';
+import { BaseWindowComponent } from '../components/windows/base-window.component';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WindowService {
-  windows = signal<Map<string, WindowState>>(new Map());
-  activeWindowId = signal<string | null>(null);
-  
-  private readonly baseZIndex = 10;
-  private nextZIndex = 10;
-  
-  registerWindow(id: string, title: string, x: number, y: number): void {
-    const state: WindowState = {
-      id,
-      title,
-      isMinimized: false,
-      x,
-      y,
-      zIndex: this.nextZIndex++
-    };
-    
-    this.windows.update(map => {
-      const newMap = new Map(map);
-      newMap.set(id, state);
-      return newMap;
-    });
+  windows = signal<BaseWindowComponent[]>([]);
+  zoom = signal(1);
+
+  currentDraggingWindow = signal<BaseWindowComponent | null>(null);
+  dragStartX = 0;
+  dragStartY = 0;
+  windowStartX = 0;
+  windowStartY = 0;
+
+  registerWindow(baseWindowComponent: BaseWindowComponent): void {
+    this.windows.update(windows => [...windows, baseWindowComponent]);
   }
-  
-  getWindow(id: string): WindowState | undefined {
-    return this.windows().get(id);
+
+  getWindow(id: string): BaseWindowComponent | undefined {
+    return this.windows().find(w => w.windowId === id);
   }
-  
-  updatePosition(id: string, x: number, y: number): void {
-    this.windows.update(map => {
-      const newMap = new Map(map);
-      const window = newMap.get(id);
-      if (window) {
-        window.x = x;
-        window.y = y;
-      }
-      return newMap;
-    });
+
+  bringToFront(window: BaseWindowComponent): void {
+    if (!window) return;
+
+    const highestZIndex = Math.max(...this.windows().map(w => w.zIndex()));
+    window.zIndex.set(highestZIndex + 1);
   }
-  
-  activateWindow(id: string): void {
-    this.activeWindowId.set(id);
-    
-    this.windows.update(map => {
-      const newMap = new Map(map);
-      const window = newMap.get(id);
-      if (window) {
-        window.zIndex = this.nextZIndex++;
-      }
-      return newMap;
-    });
+
+  startDragging(clientX: number, clientY: number, window: BaseWindowComponent): void {
+    this.dragStartX = clientX;
+    this.dragStartY = clientY;
+    this.windowStartX = window.x();
+    this.windowStartY = window.y();
+    this.currentDraggingWindow.set(window);
   }
-  
-  bringToFront(id: string): void {
-    this.activateWindow(id);
+
+  stopDragging(window: BaseWindowComponent): void {
+    if (this.currentDraggingWindow() !== window) return;
+    this.currentDraggingWindow.set(null);
   }
-  
-  toggleMinimize(id: string): void {
-    this.windows.update(map => {
-      const newMap = new Map(map);
-      const window = newMap.get(id);
-      if (window) {
-        window.isMinimized = !window.isMinimized;
-        if (!window.isMinimized) {
-          // Restore also activates
-          this.activateWindow(id);
-        } else if (this.activeWindowId() === id) {
-          // If minimizing active window, clear active state
-          this.activeWindowId.set(null);
-        }
-      }
-      return newMap;
-    });
+
+  stopDraggingAll(): void {
+    this.currentDraggingWindow.set(null);
   }
-  
-  isMinimized(id: string): boolean {
-    return this.getWindow(id)?.isMinimized ?? false;
+
+  updateDraggingPosition(x: number, y: number): void {
+    const draggingWindow = this.currentDraggingWindow();
+    if (!draggingWindow) return;
+
+    const currentZoom = this.zoom();
+    const deltaX = (x - this.dragStartX) / currentZoom;
+    const deltaY = (y - this.dragStartY) / currentZoom;
+
+    const newX = this.windowStartX + deltaX;
+    const newY = this.windowStartY + deltaY;
+
+    draggingWindow.x.set(newX);
+    draggingWindow.y.set(newY);
   }
 }

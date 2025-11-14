@@ -1,5 +1,5 @@
 import { Component, signal, effect, ChangeDetectionStrategy } from '@angular/core';
-import { BaseWindowComponent } from '../../core/base-window.component';
+import { BaseWindowComponent } from '../base-window.component';
 
 @Component({
   selector: 'app-notepad',
@@ -9,8 +9,8 @@ import { BaseWindowComponent } from '../../core/base-window.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NotepadComponent extends BaseWindowComponent {
-  protected override windowId = 'notepad-1';
-  protected override windowTitle = 'NOTEPAD.TXT';
+  public override windowId = 'notepad-1';
+  public override windowTitle = 'NOTEPAD.TXT';
   protected override storageKey = 'brutalos_notepad';
   
   protected content = signal('');

@@ -1,5 +1,5 @@
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { BaseWindowComponent } from '../../core/base-window.component';
+import { BaseWindowComponent } from '../base-window.component';
 
 @Component({
   selector: 'app-calculator',
@@ -9,8 +9,8 @@ import { BaseWindowComponent } from '../../core/base-window.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CalculatorComponent extends BaseWindowComponent {
-  protected override windowId = 'calculator-1';
-  protected override windowTitle = 'CALCULATOR.EXE';
+  public override windowId = 'calculator-1';
+  public override windowTitle = 'CALCULATOR.EXE';
   protected override storageKey = 'brutalos_calculator';
 
   protected display = signal('0');

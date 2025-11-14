@@ -10,7 +10,7 @@
   (touchmove)="onTouchMove($event)"
   (touchend)="onTouchEnd($event)"
 >
-  <div class="desk" [style.transform]="'translate(' + deskX() + 'px, ' + deskY() + 'px) scale(' + zoom() + ')'">
+  <div class="desk" [style.transform]="'translate(' + deskX() + 'px, ' + deskY() + 'px) scale(' + windowService.zoom() + ')'">
     <div class="desk-surface" #deskSurface>
       <app-notepad />
       <app-todo />

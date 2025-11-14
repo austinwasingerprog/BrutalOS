@@ -1,5 +1,6 @@
 import { Component, inject, computed } from '@angular/core';
 import { WindowService } from '../../core/window.service';
+import { BaseWindowComponent } from '../windows/base-window.component';
 
 @Component({
   selector: 'app-taskbar',
@@ -10,10 +11,10 @@ import { WindowService } from '../../core/window.service';
 export class TaskbarComponent {
   protected windowService = inject(WindowService);
   protected minimizedWindows = computed(() => 
-    Array.from(this.windowService.windows().values()).filter(w => w.isMinimized)
+    this.windowService.windows().filter(w => w.isMinimized()).sort((a, b) => a.windowTitle.localeCompare(b.windowTitle))
   );
   
-  restoreWindow(windowId: string): void {
-    this.windowService.toggleMinimize(windowId);
+  restoreWindow(window: BaseWindowComponent): void {
+    window.isMinimized.set(false);
   }
 }

@@ -1,29 +1,28 @@
 import { signal, computed, inject, OnInit, OnDestroy, effect, Directive, ElementRef, viewChild, afterNextRender } from '@angular/core';
-import { WindowService } from './window.service';
-import { StorageService } from './storage.service';
-import { DeskStateService } from './desk-state.service';
+import { WindowService } from '../../core/window.service';
+import { StorageService } from '../../core/storage.service';
 
 @Directive()
 export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   protected windowService = inject(WindowService);
   protected storageService = inject(StorageService);
-  protected deskStateService = inject(DeskStateService);
 
   protected windowContainer = viewChild<ElementRef<HTMLElement>>('windowContainer');
 
-  protected abstract windowId: string;
-  protected abstract windowTitle: string;
+  public abstract windowId: string;
+  public abstract windowTitle: string;
   protected abstract storageKey: string;
   protected abstract getDefaultPosition(): { x: number; y: number };
   protected abstract getParticleColor(): string;
 
-  protected x = signal(0);
-  protected y = signal(0);
-  protected zIndex = computed(() => this.windowService.getWindow(this.windowId)?.zIndex ?? 1);
-  protected isMinimized = computed(() => this.windowService.isMinimized(this.windowId));
-  protected isActive = computed(() => this.windowService.activeWindowId() === this.windowId);
+  public x = signal(0);
+  public y = signal(0);
+  public zIndex = signal(0);
+  public isMinimized = signal(false);
+  public isActive = signal(false);
 
   protected isDragging = signal(false);
+
   private dragStartX = 0;
   private dragStartY = 0;
   private windowStartX = 0;
@@ -42,7 +41,12 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
 
   onMouseDown(event: MouseEvent): void {
     if (!this.isLeftMouseButton(event)) return;
-    this.windowService.bringToFront(this.windowId);
+    this.windowService.bringToFront(this);
+  }
+
+  onTouchStart(event: TouchEvent): void {
+    if (!this.isSingleTouchGesture(event)) return;
+    this.windowService.bringToFront(this);
   }
 
   onHeaderMouseDown(event: MouseEvent): void {
@@ -62,33 +66,37 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   private activateHeader(event: Event, x: number, y: number): void {
     event.preventDefault();
     event.stopPropagation();
-    this.windowService.bringToFront(this.windowId);
+
+    this.windowService.bringToFront(this);
     this.beginDrag(x, y);
   }
 
   private beginDrag(clientX: number, clientY: number): void {
-    this.isDragging.set(true);
-    this.dragStartX = clientX;
-    this.dragStartY = clientY;
-    this.windowStartX = this.x();
-    this.windowStartY = this.y();
+    this.windowService.startDragging(clientX, clientY, this);
+    // this.isDragging.set(true);
+    // this.dragStartX = clientX;
+    // this.dragStartY = clientY;
+    // this.windowStartX = this.x();
+    // this.windowStartY = this.y();
   }
 
   onWindowMouseMove(event: MouseEvent): void {
-    if (!this.isDragging()) return;
-    this.updateWindowPosition(event.clientX, event.clientY);
+    this.windowService.updateDraggingPosition(event.clientX, event.clientY);
+    // if (!this.isDragging()) return;
+    // this.updateWindowPosition(event.clientX, event.clientY);
   }
 
   onWindowTouchMove(event: TouchEvent): void {
-    if (!this.isDragging() || !this.isSingleTouchGesture(event)) return;
+    this.windowService.updateDraggingPosition(event.touches[0].clientX, event.touches[0].clientY);
+    // if (!this.isDragging() || !this.isSingleTouchGesture(event)) return;
 
-    event.preventDefault();
-    const touch = event.touches[0];
-    this.updateWindowPosition(touch.clientX, touch.clientY);
+    // event.preventDefault();
+    // const touch = event.touches[0];
+    // this.updateWindowPosition(touch.clientX, touch.clientY);
   }
 
   private updateWindowPosition(clientX: number, clientY: number): void {
-    const currentZoom = this.deskStateService.zoom();
+    const currentZoom = this.windowService.zoom();
     const deltaX = (clientX - this.dragStartX) / currentZoom;
     const deltaY = (clientY - this.dragStartY) / currentZoom;
 
@@ -97,19 +105,20 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
 
     this.x.set(newX);
     this.y.set(newY);
-    this.windowService.updatePosition(this.windowId, newX, newY);
   }
 
   onWindowMouseUp(): void {
-    this.isDragging.set(false);
+    this.windowService.stopDragging(this);
+    // this.isDragging.set(false);
   }
 
   onWindowTouchEnd(): void {
-    this.isDragging.set(false);
+    this.windowService.stopDragging(this);
+    // this.isDragging.set(false);
   }
 
   onMinimize(): void {
-    this.windowService.toggleMinimize(this.windowId);
+    this.isMinimized.set(true);
   }
 
   private isLeftMouseButton(event: MouseEvent): boolean {
@@ -141,27 +150,9 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
       defaultPosition.y
     );
 
-    this.registerWindowInService(savedState.x, savedState.y);
-    this.restoreMinimizedState(savedState.isMinimized);
-    this.synchronizeLocalState();
-  }
-
-  private registerWindowInService(x: number, y: number): void {
-    this.windowService.registerWindow(this.windowId, this.windowTitle, x, y);
-  }
-
-  private restoreMinimizedState(isMinimized: boolean): void {
-    if (isMinimized) {
-      this.windowService.toggleMinimize(this.windowId);
-    }
-  }
-
-  private synchronizeLocalState(): void {
-    const windowState = this.windowService.getWindow(this.windowId);
-
-    if (windowState) {
-      this.x.set(windowState.x);
-      this.y.set(windowState.y);
-    }
+    this.windowService.registerWindow(this);
+    this.isMinimized.set(savedState.isMinimized);
+    this.x.set(savedState.x);
+    this.y.set(savedState.y);
   }
 }

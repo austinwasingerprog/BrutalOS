@@ -1,6 +1,6 @@
 import { Component, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
-import { BaseWindowComponent } from '../../core/base-window.component';
-import { TodoItem } from '../../core/storage.service';
+import { BaseWindowComponent } from '../base-window.component';
+import { TodoItem } from '../../../core/storage.service';
 
 @Component({
   selector: 'app-todo',
@@ -10,8 +10,8 @@ import { TodoItem } from '../../core/storage.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TodoComponent extends BaseWindowComponent {
-  protected override windowId = 'todo-1';
-  protected override windowTitle = 'TODO.TXT';
+  public override windowId = 'todo-1';
+  public override windowTitle = 'TODO.TXT';
   protected override storageKey = 'brutalos_todo';
   
   protected todos = signal<TodoItem[]>([]);

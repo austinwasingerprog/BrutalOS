@@ -21,6 +21,7 @@ You are an expert in TypeScript, Angular 20+, and neo-brutalist UI design. This 
 **Panning**: All panning logic (middle-click, pan mode toggle, cursor styles) is handled directly in `DeskComponent` via signals and methods. The `ControlsComponent` receives pan state and toggle method via inputs/outputs wired through the app component.
 
 ## Critical Patterns
+NEVER add comments to the codebase. Use clear, self-documenting code instead.
 
 ### Window Component Pattern
 All window components MUST extend `BaseWindowComponent` and implement:
