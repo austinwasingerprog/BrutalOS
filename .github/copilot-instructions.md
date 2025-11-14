@@ -77,6 +77,8 @@ protected storageService = inject(StorageService);
 - Use style/class bindings: `[style.cursor]="cursorStyle()"`, `[class.active]="isActive()"`
 - Prefer type inference; avoid `any`, use `unknown` if type uncertain
 - Do NOT use `setTimeout` - use `effect()` or `afterNextRender()` for timing
+- Never add comments; write clear, self-documenting code
+- Never add dynamic event listeners; use Angular template bindings
 
 ## Development Commands
 

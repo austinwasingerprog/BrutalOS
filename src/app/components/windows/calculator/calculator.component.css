@@ -10,9 +10,8 @@
   box-shadow: 8px 8px 0 var(--shadow-color);
   display: flex;
   flex-direction: column;
-  left: var(--window-x, 50%);
-  top: var(--window-y, 50%);
-  transform: translate(-50%, -50%);
+  left: var(--window-x);
+  top: var(--window-y);
   z-index: var(--window-z, 1);
 }
 
