@@ -1,7 +1,6 @@
 @if (!isMinimized()) {
 <div #windowContainer class="window-container" [style.--window-x.px]="x()" [style.--window-y.px]="y()" [style.--window-z]="zIndex()"
-  (mousedown)="onMouseDown($event)" (mousemove)="onWindowMouseMove($event)" (mouseup)="onWindowMouseUp()"
-  (mouseleave)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)" (touchend)="onWindowTouchEnd()"
+  (mousedown)="onMouseDown($event)" (mousemove)="onWindowMouseMove($event)" (mouseup)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)" (touchend)="onWindowTouchEnd()"
   (touchcancel)="onWindowTouchEnd()">
 
   <div class="calc-header" (mousedown)="onHeaderMouseDown($event)" (touchstart)="onHeaderTouchStart($event)">

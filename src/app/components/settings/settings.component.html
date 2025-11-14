@@ -1,6 +1,6 @@
 <div #windowContainer class="window" [class.minimized]="isMinimized()" [style.left.px]="x()" [style.top.px]="y()"
   [style.z-index]="zIndex()" (mousedown)="onMouseDown($event)" (mousemove)="onWindowMouseMove($event)"
-  (mouseup)="onWindowMouseUp()" (mouseleave)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)"
+  (mouseup)="onWindowMouseUp()" (touchmove)="onWindowTouchMove($event)"
   (touchend)="onWindowTouchEnd()" (touchcancel)="onWindowTouchEnd()">
   <div class="window-header" (mousedown)="onHeaderMouseDown($event)" (touchstart)="onHeaderTouchStart($event)">
     <span class="window-title">{{ windowTitle }}</span>

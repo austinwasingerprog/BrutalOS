@@ -33,6 +33,97 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
     this.setupWindowStatePersistence();
   }
 
+  ngOnInit(): void {
+    this.initializeWindowFromStorage();
+  }
+
+  ngOnDestroy(): void {
+  }
+
+  onMouseDown(event: MouseEvent): void {
+    if (!this.isLeftMouseButton(event)) return;
+    this.windowService.bringToFront(this.windowId);
+  }
+
+  onHeaderMouseDown(event: MouseEvent): void {
+    if (!this.isLeftMouseButton(event)) return;
+    if (this.isClickingButton(event)) return;
+
+    this.activateHeader(event, event.clientX, event.clientY);
+  }
+
+  onHeaderTouchStart(event: TouchEvent): void {
+    if (!this.isSingleTouchGesture(event)) return;
+    if (this.isClickingButton(event as any)) return;
+
+    this.activateHeader(event, event.touches[0].clientX, event.touches[0].clientY);
+  }
+
+  private activateHeader(event: Event, x: number, y: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.windowService.bringToFront(this.windowId);
+    this.beginDrag(x, y);
+  }
+
+  private beginDrag(clientX: number, clientY: number): void {
+    this.isDragging.set(true);
+    this.dragStartX = clientX;
+    this.dragStartY = clientY;
+    this.windowStartX = this.x();
+    this.windowStartY = this.y();
+  }
+
+  onWindowMouseMove(event: MouseEvent): void {
+    if (!this.isDragging()) return;
+    this.updateWindowPosition(event.clientX, event.clientY);
+  }
+
+  onWindowTouchMove(event: TouchEvent): void {
+    if (!this.isDragging() || !this.isSingleTouchGesture(event)) return;
+
+    event.preventDefault();
+    const touch = event.touches[0];
+    this.updateWindowPosition(touch.clientX, touch.clientY);
+  }
+
+  private updateWindowPosition(clientX: number, clientY: number): void {
+    const currentZoom = this.deskStateService.zoom();
+    const deltaX = (clientX - this.dragStartX) / currentZoom;
+    const deltaY = (clientY - this.dragStartY) / currentZoom;
+
+    const newX = this.windowStartX + deltaX;
+    const newY = this.windowStartY + deltaY;
+
+    this.x.set(newX);
+    this.y.set(newY);
+    this.windowService.updatePosition(this.windowId, newX, newY);
+  }
+
+  onWindowMouseUp(): void {
+    this.isDragging.set(false);
+  }
+
+  onWindowTouchEnd(): void {
+    this.isDragging.set(false);
+  }
+
+  onMinimize(): void {
+    this.windowService.toggleMinimize(this.windowId);
+  }
+
+  private isLeftMouseButton(event: MouseEvent): boolean {
+    return event.button === 0;
+  }
+
+  private isClickingButton(event: MouseEvent): boolean {
+    return (event.target as HTMLElement).tagName.toLowerCase() == 'button';
+  }
+
+  private isSingleTouchGesture(event: TouchEvent): boolean {
+    return event.touches.length === 1;
+  }
+
   private setupWindowStatePersistence(): void {
     effect(() => {
       const x = this.x();
@@ -40,13 +131,6 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
       const isMinimized = this.isMinimized();
       this.storageService.saveWindowState(this.storageKey, x, y, isMinimized);
     });
-  }
-
-  ngOnInit(): void {
-    this.initializeWindowFromStorage();
-  }
-
-  ngOnDestroy(): void {
   }
 
   private initializeWindowFromStorage(): void {
@@ -79,89 +163,5 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
       this.x.set(windowState.x);
       this.y.set(windowState.y);
     }
-  }
-
-  onHeaderMouseDown(event: MouseEvent): void {
-    if (!this.isLeftMouseButton(event)) return;
-    if (this.isClickingButton(event)) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    this.windowService.bringToFront(this.windowId);
-    this.beginDrag(event.clientX, event.clientY);
-  }
-
-  onHeaderTouchStart(event: TouchEvent): void {
-    if (this.isClickingButton(event as any)) return;
-    if (!this.isSingleTouchGesture(event)) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    this.windowService.bringToFront(this.windowId);
-    const touch = event.touches[0];
-    this.beginDrag(touch.clientX, touch.clientY);
-  }
-
-  private isSingleTouchGesture(event: TouchEvent): boolean {
-    return event.touches.length === 1;
-  }
-
-  private beginDrag(clientX: number, clientY: number): void {
-    this.isDragging.set(true);
-    this.dragStartX = clientX;
-    this.dragStartY = clientY;
-    this.windowStartX = this.x();
-    this.windowStartY = this.y();
-  }
-
-  onWindowMouseMove(event: MouseEvent): void {
-    if (!this.isDragging()) return;
-    this.updateWindowPosition(event.clientX, event.clientY);
-  }
-
-  onWindowMouseUp(): void {
-    this.isDragging.set(false);
-  }
-
-  onWindowTouchMove(event: TouchEvent): void {
-    if (!this.isDragging() || !this.isSingleTouchGesture(event)) return;
-
-    event.preventDefault();
-    const touch = event.touches[0];
-    this.updateWindowPosition(touch.clientX, touch.clientY);
-  }
-
-  onWindowTouchEnd(): void {
-    this.isDragging.set(false);
-  }
-
-  private updateWindowPosition(clientX: number, clientY: number): void {
-    const currentZoom = this.deskStateService.zoom();
-    const deltaX = (clientX - this.dragStartX) / currentZoom;
-    const deltaY = (clientY - this.dragStartY) / currentZoom;
-
-    const newX = this.windowStartX + deltaX;
-    const newY = this.windowStartY + deltaY;
-
-    this.x.set(newX);
-    this.y.set(newY);
-    this.windowService.updatePosition(this.windowId, newX, newY);
-  }
-
-  onMinimize(): void {
-    this.windowService.toggleMinimize(this.windowId);
-  }
-
-  onMouseDown(event: MouseEvent): void {
-    if (!this.isLeftMouseButton(event)) return;
-    this.windowService.bringToFront(this.windowId);
-  }
-
-  private isLeftMouseButton(event: MouseEvent): boolean {
-    return event.button === 0;
-  }
-
-  private isClickingButton(event: MouseEvent): boolean {
-    return (event.target as HTMLElement).closest('button') !== null;
   }
 }
