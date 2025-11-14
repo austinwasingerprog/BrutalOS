@@ -62,8 +62,6 @@ export class DeskComponent {
   private readonly minZoom = 0.5;
   private readonly maxZoom = 2.0;
   private readonly zoomStep = 0.1;
-  
-  // Touch state for pinch-to-zoom
   private touchStartZoom = 1;
   private initialPinchDistance = 0;
   

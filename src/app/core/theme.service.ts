@@ -9,14 +9,12 @@ export class ThemeService {
   theme = signal<Theme>('light');
   
   constructor() {
-    // Load saved theme from localStorage
     const savedTheme = localStorage.getItem('brutalos_theme') as Theme;
     if (savedTheme === 'light' || savedTheme === 'dark') {
       this.theme.set(savedTheme);
       this.applyTheme(savedTheme);
     }
     
-    // Save theme changes to localStorage and apply to DOM
     effect(() => {
       const currentTheme = this.theme();
       localStorage.setItem('brutalos_theme', currentTheme);

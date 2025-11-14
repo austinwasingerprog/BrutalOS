@@ -26,10 +26,6 @@ export class CalculatorComponent extends BaseWindowComponent {
     };
   }
 
-  protected override getParticleColor(): string {
-    return '#ff0'; // yellow
-  }
-
   onNumberClick(num: string): void {
     if (this.newNumber()) {
       this.display.set(num);

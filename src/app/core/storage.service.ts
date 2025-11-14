@@ -31,7 +31,6 @@ export class StorageService {
   private readonly TODO_KEY = 'brutalos_todo';
   private readonly CALCULATOR_KEY = 'brutalos_calculator';
 
-  // Generic window state persistence
   saveWindowState(key: string, x: number, y: number, isMinimized: boolean): void {
     const current = this.load<any>(key, {});
     this.save(key, {
@@ -45,7 +44,6 @@ export class StorageService {
     return data.window || { x: defaultX, y: defaultY, isMinimized: false };
   }
 
-  // Notepad persistence
   saveNotepadContent(content: string): void {
     const current = this.loadNotepad();
     this.save(this.NOTEPAD_KEY, { ...current, content });
@@ -66,7 +64,6 @@ export class StorageService {
     });
   }
 
-  // Todo persistence
   saveTodos(todos: TodoItem[], nextId: number): void {
     const current = this.loadTodo();
     this.save(this.TODO_KEY, { ...current, todos, nextId });
@@ -88,7 +85,6 @@ export class StorageService {
     });
   }
 
-  // Generic helpers
   private save<T>(key: string, data: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(data));

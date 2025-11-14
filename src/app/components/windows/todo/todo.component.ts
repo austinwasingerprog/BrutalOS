@@ -42,10 +42,6 @@ export class TodoComponent extends BaseWindowComponent {
     };
   }
   
-  protected override getParticleColor(): string {
-    return '#0ff'; // cyan
-  }
-  
   override ngOnInit(): void {
     this.loadSavedTodos();
     super.ngOnInit();

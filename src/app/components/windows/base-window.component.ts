@@ -13,21 +13,12 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   public abstract windowTitle: string;
   protected abstract storageKey: string;
   protected abstract getDefaultPosition(): { x: number; y: number };
-  protected abstract getParticleColor(): string;
 
   public x = signal(0);
   public y = signal(0);
   public zIndex = signal(0);
   public isMinimized = signal(false);
-  public isActive = signal(false);
-
-  protected isDragging = signal(false);
-
-  private dragStartX = 0;
-  private dragStartY = 0;
-  private windowStartX = 0;
-  private windowStartY = 0;
-
+  
   constructor() {
     this.setupWindowStatePersistence();
   }
@@ -73,48 +64,22 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
 
   private beginDrag(clientX: number, clientY: number): void {
     this.windowService.startDragging(clientX, clientY, this);
-    // this.isDragging.set(true);
-    // this.dragStartX = clientX;
-    // this.dragStartY = clientY;
-    // this.windowStartX = this.x();
-    // this.windowStartY = this.y();
   }
 
   onWindowMouseMove(event: MouseEvent): void {
     this.windowService.updateDraggingPosition(event.clientX, event.clientY);
-    // if (!this.isDragging()) return;
-    // this.updateWindowPosition(event.clientX, event.clientY);
   }
 
   onWindowTouchMove(event: TouchEvent): void {
     this.windowService.updateDraggingPosition(event.touches[0].clientX, event.touches[0].clientY);
-    // if (!this.isDragging() || !this.isSingleTouchGesture(event)) return;
-
-    // event.preventDefault();
-    // const touch = event.touches[0];
-    // this.updateWindowPosition(touch.clientX, touch.clientY);
-  }
-
-  private updateWindowPosition(clientX: number, clientY: number): void {
-    const currentZoom = this.windowService.zoom();
-    const deltaX = (clientX - this.dragStartX) / currentZoom;
-    const deltaY = (clientY - this.dragStartY) / currentZoom;
-
-    const newX = this.windowStartX + deltaX;
-    const newY = this.windowStartY + deltaY;
-
-    this.x.set(newX);
-    this.y.set(newY);
   }
 
   onWindowMouseUp(): void {
     this.windowService.stopDragging(this);
-    // this.isDragging.set(false);
   }
 
   onWindowTouchEnd(): void {
     this.windowService.stopDragging(this);
-    // this.isDragging.set(false);
   }
 
   onMinimize(): void {

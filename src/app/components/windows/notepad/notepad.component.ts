@@ -34,10 +34,6 @@ export class NotepadComponent extends BaseWindowComponent {
     };
   }
   
-  protected override getParticleColor(): string {
-    return '#ff1493'; // pink
-  }
-  
   override ngOnInit(): void {
     this.loadSavedContent();
     super.ngOnInit();
