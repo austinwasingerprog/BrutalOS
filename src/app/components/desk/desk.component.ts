@@ -3,18 +3,15 @@ import { NotepadComponent } from '../notepad/notepad.component';
 import { TodoComponent } from '../todo/todo.component';
 import { CalculatorComponent } from '../calculator/calculator.component';
 import { SettingsComponent } from '../settings/settings.component';
-import { ParticleOverlayComponent } from '../particle-overlay/particle-overlay.component';
-import { PanService } from '../../core/pan.service';
 import { DeskStateService } from '../../core/desk-state.service';
 
 @Component({
   selector: 'app-desk',
-  imports: [NotepadComponent, TodoComponent, CalculatorComponent, SettingsComponent, ParticleOverlayComponent],
+  imports: [NotepadComponent, TodoComponent, CalculatorComponent, SettingsComponent],
   templateUrl: './desk.component.html',
   styleUrl: './desk.component.css'
 })
 export class DeskComponent {
-  private panService = inject(PanService);
   private deskStateService = inject(DeskStateService);
   
   // View query for the desk surface element
@@ -23,11 +20,49 @@ export class DeskComponent {
   protected deskX = signal(0);
   protected deskY = signal(0);
   protected zoom = signal(1);
-  protected cursorStyle = computed(() => this.panService.getCursorStyle());
+  
+  // Pan state (formerly in PanService)
+  protected isPanning = signal(false);
+  panModeActive = signal(false);
+  private lastX = 0;
+  private lastY = 0;
+  
+  protected cursorStyle = computed(() => {
+    if (this.panModeActive() || this.isPanning()) {
+      return this.isPanning() ? 'grabbing' : 'grab';
+    }
+    return 'default';
+  });
   
   constructor() {
     this.syncZoomWithGlobalState();
     this.registerDeskSurfaceWithGlobalState();
+  }
+  
+  private startPan(clientX: number, clientY: number, isMiddleClick: boolean = false): void {
+    this.isPanning.set(true);
+    this.lastX = clientX;
+    this.lastY = clientY;
+  }
+  
+  private updatePan(clientX: number, clientY: number): void {
+    if (this.isPanning()) {
+      const deltaX = clientX - this.lastX;
+      const deltaY = clientY - this.lastY;
+      
+      this.updateDeskPosition(deltaX, deltaY);
+      
+      this.lastX = clientX;
+      this.lastY = clientY;
+    }
+  }
+  
+  private endPan(): void {
+    this.isPanning.set(false);
+  }
+  
+  togglePanMode(): void {
+    this.panModeActive.update(active => !active);
   }
   
   private syncZoomWithGlobalState(): void {
@@ -49,7 +84,6 @@ export class DeskComponent {
   private readonly minZoom = 0.5;
   private readonly maxZoom = 2.0;
   private readonly zoomStep = 0.1;
-  private isMiddleMousePan = false;
   
   // Touch state for pinch-to-zoom
   private touchStartZoom = 1;
@@ -68,23 +102,21 @@ export class DeskComponent {
   }
   
   private isLeftMouseButtonWithPanMode(event: MouseEvent): boolean {
-    return event.button === 0 && this.panService.panModeActive();
+    return event.button === 0 && this.panModeActive();
   }
   
   private startMiddleMousePan(event: MouseEvent): void {
     event.preventDefault();
-    this.isMiddleMousePan = true;
-    this.panService.startPan(event.clientX, event.clientY, true);
+    this.startPan(event.clientX, event.clientY, true);
   }
   
   private startLeftMousePan(event: MouseEvent): void {
     event.preventDefault();
-    this.isMiddleMousePan = false;
-    this.panService.startPan(event.clientX, event.clientY, false);
+    this.startPan(event.clientX, event.clientY, false);
   }
   
   onMouseMove(event: MouseEvent): void {
-    this.panService.updatePan(event.clientX, event.clientY, this.updateDeskPosition);
+    this.updatePan(event.clientX, event.clientY);
   }
   
   private updateDeskPosition = (deltaX: number, deltaY: number): void => {
@@ -101,14 +133,12 @@ export class DeskComponent {
   
   onMouseUp(event: MouseEvent): void {
     if (event.button === 1 || event.button === 0) {
-      this.panService.endPan(this.isMiddleMousePan);
-      this.isMiddleMousePan = false;
+      this.endPan();
     }
   }
   
   onMouseLeave(): void {
-    this.panService.endPan(this.isMiddleMousePan);
-    this.isMiddleMousePan = false;
+    this.endPan();
   }
   
   onTouchStart(event: TouchEvent): void {
@@ -129,7 +159,7 @@ export class DeskComponent {
     this.touchStartZoom = this.zoom();
     
     const centerPoint = this.calculateTouchCenter(touch1, touch2);
-    this.panService.startPan(centerPoint.x, centerPoint.y, false);
+    this.startPan(centerPoint.x, centerPoint.y, false);
   }
   
   private calculateDistance(touch1: Touch, touch2: Touch): number {
@@ -162,7 +192,7 @@ export class DeskComponent {
     const currentDistance = this.calculateDistance(touch1, touch2);
     
     this.updateZoomFromPinch(currentDistance);
-    this.panService.updatePan(centerPoint.x, centerPoint.y, this.updateDeskPosition);
+    this.updatePan(centerPoint.x, centerPoint.y);
   }
   
   private updateZoomFromPinch(currentDistance: number): void {
@@ -179,7 +209,7 @@ export class DeskComponent {
   }
   
   private endPinchGesture(): void {
-    this.panService.endPan(false);
+    this.endPan();
     this.initialPinchDistance = 0;
   }
   

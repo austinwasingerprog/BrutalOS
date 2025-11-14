@@ -1,7 +1,7 @@
 <div class="control-panel">
   <button 
     class="control-box"
-    [class.active]="panService.panModeActive()"
+    [class.active]="panModeActive()()"
     (click)="togglePanMode()"
     title="Pan Mode (Middle-click or toggle)"
   >

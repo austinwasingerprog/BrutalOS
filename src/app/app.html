@@ -13,4 +13,7 @@
 <app-taskbar />
 
 <!-- Control panel component -->
-<app-controls />
+<app-controls 
+  [panModeActive]="desk().panModeActive"
+  (onTogglePanMode)="onTogglePanMode()"
+/>

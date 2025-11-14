@@ -1,16 +1,14 @@
 import { signal, computed, inject, OnInit, OnDestroy, effect, Directive, ElementRef, viewChild, afterNextRender } from '@angular/core';
 import { WindowService } from './window.service';
 import { StorageService } from './storage.service';
-import { ParticleService } from './particle.service';
 import { DeskStateService } from './desk-state.service';
 
 @Directive()
 export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   protected windowService = inject(WindowService);
   protected storageService = inject(StorageService);
-  protected particleService = inject(ParticleService);
   protected deskStateService = inject(DeskStateService);
-  
+
   protected windowContainer = viewChild<ElementRef<HTMLElement>>('windowContainer');
 
   protected abstract windowId: string;
@@ -33,8 +31,6 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
 
   constructor() {
     this.setupWindowStatePersistence();
-    this.setupParticleEffects();
-    this.setupZoomTracking();
   }
 
   private setupWindowStatePersistence(): void {
@@ -46,50 +42,11 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
     });
   }
 
-  private setupParticleEffects(): void {
-    effect(() => {
-      const shouldEmit = this.isActive() && !this.isMinimized();
-      const windowElement = this.windowContainer()?.nativeElement;
-      const deskContainer = this.deskStateService.getDeskSurface();
-      
-      if (shouldEmit && windowElement && deskContainer) {
-        this.particleService.startEmitting(
-          this.windowId,
-          windowElement,
-          this.getParticleColor(),
-          deskContainer
-        );
-      } else {
-        this.particleService.stopEmitting(this.windowId);
-      }
-    });
-    
-    // Update particle positions when window moves
-    effect(() => {
-      const x = this.x();
-      const y = this.y();
-      const windowElement = this.windowContainer()?.nativeElement;
-      const deskContainer = this.deskStateService.getDeskSurface();
-      
-      if (this.isActive() && !this.isMinimized() && windowElement && deskContainer) {
-        this.particleService.updateWindowPosition(this.windowId, windowElement, deskContainer);
-      }
-    });
-  }
-
-  private setupZoomTracking(): void {
-    effect(() => {
-      const currentZoom = this.deskStateService.zoom();
-      this.particleService.updateZoom(currentZoom);
-    });
-  }
-
   ngOnInit(): void {
     this.initializeWindowFromStorage();
   }
 
   ngOnDestroy(): void {
-    this.particleService.stopEmitting(this.windowId);
   }
 
   private initializeWindowFromStorage(): void {
@@ -132,14 +89,6 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.windowService.bringToFront(this.windowId);
     this.beginDrag(event.clientX, event.clientY);
-  }
-
-  private isLeftMouseButton(event: MouseEvent): boolean {
-    return event.button === 0;
-  }
-
-  private isClickingButton(event: MouseEvent): boolean {
-    return (event.target as HTMLElement).closest('button') !== null;
   }
 
   onHeaderTouchStart(event: TouchEvent): void {
@@ -206,5 +155,13 @@ export abstract class BaseWindowComponent implements OnInit, OnDestroy {
   onMouseDown(event: MouseEvent): void {
     if (!this.isLeftMouseButton(event)) return;
     this.windowService.bringToFront(this.windowId);
+  }
+
+  private isLeftMouseButton(event: MouseEvent): boolean {
+    return event.button === 0;
+  }
+
+  private isClickingButton(event: MouseEvent): boolean {
+    return (event.target as HTMLElement).closest('button') !== null;
   }
 }

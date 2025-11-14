@@ -1,5 +1,4 @@
-import { Component, inject } from '@angular/core';
-import { PanService } from '../../core/pan.service';
+import { Component, input, output, Signal } from '@angular/core';
 
 @Component({
   selector: 'app-controls',
@@ -8,9 +7,10 @@ import { PanService } from '../../core/pan.service';
   styleUrl: './controls.component.css'
 })
 export class ControlsComponent {
-  protected panService = inject(PanService);
+  panModeActive = input.required<Signal<boolean>>();
+  onTogglePanMode = output<void>();
   
   togglePanMode(): void {
-    this.panService.togglePanMode();
+    this.onTogglePanMode.emit();
   }
 }
